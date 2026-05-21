@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>인천 1950 — 세부 스토리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════
+       RESET
+    ══════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; height:100%; overflow:hidden;
+      background:#01030c;
+      font-family:'Noto Serif KR', serif;
+    }
+
+    /* ══════════════════════════════
+       CANVAS
+    ══════════════════════════════ */
+    #canvas-bg { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+    /* ══════════════════════════════
+       배경 레이어 — 바다/안개 컨셉
+       (타임라인 사이트와 다른 유기적 분위기)
+    ══════════════════════════════ */
+    .bg { position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+    .bg-deep {
+      position:absolute; inset:0;
+      background:
+        radial-gradient(ellipse 155% 88% at 50% 122%, #051224 0%, transparent 52%),
+        radial-gradient(ellipse 88%  60% at 14% 52%,  rgba(74,140,188,.055) 0%, transparent 62%),
+        radial-gradient(ellipse 68%  44% at 86% 26%,  rgba(201,168,76,.042) 0%, transparent 62%),
+        radial-gradient(ellipse 50%  35% at 50%  8%,  rgba(74,140,188,.03)  0%, transparent 55%);
+    }
+
+    /* 스토리 사이트 전용: 넓은 간격, 바다 느낌 격자 */
+    .bg-grid {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(74,140,188,.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,140,188,.015) 1px, transparent 1px);
+      background-size:155px 155px;
+    }
+
+    /* 안개 — 스토리 사이트에서 더 두드러짐 */
+    .bg-fog {
+      position:absolute; inset:0;
+      background:
+        radial-gradient(ellipse 78% 54% at 16% 72%, rgba(74,140,188,.042) 0%, transparent 62%),
+        radial-gradient(ellipse 65% 46% at 84% 26%, rgba(201,168,76,.032) 0%, transparent 62%),
+        radial-gradient(ellipse 115% 68% at 50% 96%, rgba(2,6,20,.9) 0%, transparent 50%);
+      animation:fogOcean 34s ease-in-out infinite alternate;
+    }
+    @keyframes fogOcean {
+      from { opacity:.7; transform:scale(1)    translate(0,0); }
+      to   { opacity:1;  transform:scale(1.06) translate(.7%,.5%); }
+    }
+
+    /* 필름 그레인 */
+    .grain {
+      position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.038;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ══════════════════════════════
+       TOP RULE
+    ══════════════════════════════ */
+    .top-rule {
+      position:fixed; top:0; left:0; right:0; height:2px; z-index:30;
+      background:linear-gradient(90deg, transparent, #264e6a 18%, #4a8cbc 50%, #264e6a 82%, transparent);
+      box-shadow:0 0 30px rgba(74,140,188,.38), 0 0 8px rgba(74,140,188,.2);
+    }
+
+    /* ══════════════════════════════
+       NAV
+    ══════════════════════════════ */
+    .hdr {
+      position:fixed; top:0; left:0; right:0; z-index:20;
+      padding:24px 52px;
+      display:flex; justify-content:space-between; align-items:center;
+      background:linear-gradient(to bottom, rgba(1,3,12,.9) 0%, transparent 100%);
+    }
+    .hdr-brand {
+      font-family:'Cormorant Garamond', serif;
+      font-size:11px; letter-spacing:9px;
+      color:rgba(74,140,188,.42); text-transform:uppercase;
+    }
+    .hdr-phase {
+      font-family:'Cormorant Garamond', serif;
+      font-size:10px; letter-spacing:7px;
+      color:rgba(201,168,76,.75); text-transform:uppercase;
+      padding:5px 16px;
+      border:1px solid rgba(201,168,76,.22); border-radius:2px;
+      background:rgba(201,168,76,.03);
+      transition:color .6s ease, border-color .6s ease, background .6s ease;
+    }
+    .hdr-phase.answer {
+      color:rgba(74,140,188,.75);
+      border-color:rgba(74,140,188,.22);
+      background:rgba(74,140,188,.03);
+    }
+
+    /* ══════════════════════════════
+       SCENE (perspective 컨테이너)
+    ══════════════════════════════ */
+    .scene {
+      position:fixed; inset:0; z-index:10;
+      display:flex; align-items:center; justify-content:center;
+      perspective:1900px;
+    }
+
+    /* ══════════════════════════════
+       CARD WRAP — 3D Flip 구조
+    ══════════════════════════════ */
+    .card-wrap {
+      width:  min(86vw, 1100px);
+      height: min(66vh,  580px);
+      position:relative;
+      transform-style:preserve-3d;
+      transition:transform 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-wrap.flipped { transform:rotateY(180deg); }
+
+    /* ══════════════════════════════
+       앞·뒷면 공통
+    ══════════════════════════════ */
+    .card-face {
+      position:absolute; inset:0;
+      border-radius:20px;
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+    }
+
+    /* ══════════════════════════════
+       앞면 — Glassmorphism
+    ══════════════════════════════ */
+    .card-front {
+      background:linear-gradient(145deg, rgba(8,16,38,.94) 0%, rgba(5,10,26,.91) 100%);
+      border:1px solid rgba(201,168,76,.24);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.07),
+        inset 0 0 0 1px rgba(201,168,76,.05),
+        0 0 90px rgba(201,168,76,.06),
+        0 0 180px rgba(201,168,76,.04),
+        0 52px 150px rgba(0,0,0,.8);
+      padding:clamp(40px,6%,80px);
+      text-align:center; overflow:hidden;
+    }
+    /* 내부 유리 광택 */
+    .card-front::after {
+      content:''; position:absolute; inset:0; border-radius:20px;
+      background:linear-gradient(135deg, rgba(255,255,255,.045) 0%, transparent 38%, transparent 62%, rgba(255,255,255,.02) 100%);
+      pointer-events:none;
+    }
+
+    /* ══════════════════════════════
+       뒷면 — Glassmorphism (처음부터 180° 대기)
+    ══════════════════════════════ */
+    .card-back {
+      transform:rotateY(180deg);
+      visibility:hidden;
+      background:linear-gradient(145deg, rgba(4,8,22,.96) 0%, rgba(3,6,18,.93) 100%);
+      border:1px solid rgba(74,140,188,.24);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        inset 0 0 0 1px rgba(74,140,188,.05),
+        0 0 90px rgba(74,140,188,.06),
+        0 0 180px rgba(74,140,188,.04),
+        0 52px 150px rgba(0,0,0,.8);
+      padding:clamp(36px,5.5%,72px) clamp(52px,9%,130px);
+      text-align:center; overflow:hidden;
+    }
+    .card-wrap.flipped .card-back { visibility:visible; }
+
+    .card-back::after {
+      content:''; position:absolute; inset:0; border-radius:20px;
+      background:linear-gradient(135deg, rgba(255,255,255,.04) 0%, transparent 38%, transparent 62%, rgba(255,255,255,.018) 100%);
+      pointer-events:none;
+    }
+
+    /* 코너 장식 */
+    .cc { position:absolute; width:22px; height:22px; }
+    .cc.tl { top:20px; left:20px; border-top:1px solid rgba(201,168,76,.38); border-left:1px solid rgba(201,168,76,.38); }
+    .cc.tr { top:20px; right:20px; border-top:1px solid rgba(201,168,76,.38); border-right:1px solid rgba(201,168,76,.38); }
+    .cc.bl { bottom:20px; left:20px; border-bottom:1px solid rgba(201,168,76,.38); border-left:1px solid rgba(201,168,76,.38); }
+    .cc.br { bottom:20px; right:20px; border-bottom:1px solid rgba(201,168,76,.38); border-right:1px solid rgba(201,168,76,.38); }
+
+    .cb { position:absolute; width:22px; height:22px; }
+    .cb.tl { top:20px; left:20px; border-top:1px solid rgba(74,140,188,.32); border-left:1px solid rgba(74,140,188,.32); }
+    .cb.tr { top:20px; right:20px; border-top:1px solid rgba(74,140,188,.32); border-right:1px solid rgba(74,140,188,.32); }
+    .cb.bl { bottom:20px; left:20px; border-bottom:1px solid rgba(74,140,188,.32); border-left:1px solid rgba(74,140,188,.32); }
+    .cb.br { bottom:20px; right:20px; border-bottom:1px solid rgba(74,140,188,.32); border-right:1px solid rgba(74,140,188,.32); }
+
+    /* ══════════════════════════════
+       앞면 콘텐츠
+    ══════════════════════════════ */
+    .f-watermark {
+      position:absolute;
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(160px,22vw,320px); font-weight:300;
+      color:rgba(201,168,76,.06); line-height:1; letter-spacing:-4px;
+      user-select:none; pointer-events:none;
+    }
+    .f-num {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(10px,.76vw,12px); letter-spacing:clamp(10px,1vw,16px);
+      color:#c9a84c; text-transform:uppercase;
+      margin-bottom:clamp(22px,3.5vh,44px); position:relative; z-index:1; opacity:.88;
+    }
+    .f-q {
+      font-size:clamp(28px,4.2vw,64px); font-weight:400; line-height:1.35;
+      color:#f0ebe0;
+      text-shadow:0 0 70px rgba(201,168,76,.12), 0 2px 28px rgba(0,0,0,.6);
+      position:relative; z-index:1;
+    }
+    .f-deco {
+      position:relative; z-index:1;
+      width:36px; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(201,168,76,.58), transparent);
+      margin-top:clamp(26px,3.8vh,48px);
+    }
+
+    /* ══════════════════════════════
+       뒷면 콘텐츠
+    ══════════════════════════════ */
+    .b-num {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(9px,.72vw,11px); letter-spacing:clamp(9px,.95vw,15px);
+      color:#4a8cbc; text-transform:uppercase;
+      margin-bottom:clamp(14px,2vh,22px); position:relative; z-index:1; opacity:.9;
+    }
+    .b-rule {
+      width:48px; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(74,140,188,.58), transparent);
+      margin:0 auto clamp(18px,2.8vh,32px); position:relative; z-index:1;
+    }
+    .b-text {
+      font-size:clamp(14px,1.5vw,21px); line-height:1.98;
+      color:rgba(192,210,228,.8); max-width:68ch; position:relative; z-index:1;
+    }
+    .b-text p + p { margin-top:.9em; }
+    .b-hint {
+      font-family:'Cormorant Garamond', serif;
+      font-size:clamp(9px,.65vw,11px); letter-spacing:5px;
+      color:rgba(74,140,188,.22); text-transform:uppercase;
+      margin-top:clamp(20px,3.2vh,38px); position:relative; z-index:1;
+    }
+
+    /* ══════════════════════════════
+       FOOTER
+    ══════════════════════════════ */
+    .foot { position:fixed; bottom:0; left:0; right:0; z-index:20; }
+    .dots {
+      display:flex; align-items:center; justify-content:center;
+      gap:clamp(10px,1.2vw,18px); padding:clamp(16px,2.2vh,28px) 60px;
+    }
+    .dot {
+      height:2px; border-radius:2px; background:rgba(255,255,255,.07);
+      width:clamp(20px,1.8vw,32px);
+      transition:background .45s ease, width .45s ease, box-shadow .45s ease;
+    }
+    .dot.on {
+      background:#4a8cbc; width:clamp(40px,3.6vw,66px);
+      box-shadow:0 0 10px rgba(74,140,188,.45);
+    }
+    .prog { height:2px; background:rgba(255,255,255,.04); }
+    .pf   { height:100%; width:0%; border-radius:2px; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas-bg"></canvas>
+  <div class="bg">
+    <div class="bg-deep"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-fog"></div>
+  </div>
+  <div class="grain"></div>
+  <div class="top-rule"></div>
+
+  <div class="hdr">
+    <div class="hdr-brand">인천 1950 &nbsp;·&nbsp; 세부 스토리</div>
+    <div class="hdr-phase" id="phase-ind">질문</div>
+  </div>
+
+  <div class="scene">
+    <div class="card-wrap" id="card-wrap">
+
+      <!-- ── 앞면 ── -->
+      <div class="card-face card-front">
+        <div class="cc tl"></div><div class="cc tr"></div>
+        <div class="cc bl"></div><div class="cc br"></div>
+        <div class="f-watermark" id="f-wm">01</div>
+        <div class="f-num"       id="f-num">STORY &nbsp; 01</div>
+        <div class="f-q"         id="f-q">왜 하필 인천이었을까?</div>
+        <div class="f-deco"></div>
+      </div>
+
+      <!-- ── 뒷면 ── -->
+      <div class="card-face card-back">
+        <div class="cb tl"></div><div class="cb tr"></div>
+        <div class="cb bl"></div><div class="cb br"></div>
+        <div class="b-num" id="b-num">STORY &nbsp; 01</div>
+        <div class="b-rule"></div>
+        <div class="b-text">
+          <p id="b-p1"></p>
+          <p id="b-p2"></p>
+        </div>
+        <div class="b-hint">QR 코드로 더 자세한 이야기를 확인하세요</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="dots">
+      <div class="dot on" id="d0"></div>
+      <div class="dot"    id="d1"></div>
+      <div class="dot"    id="d2"></div>
+      <div class="dot"    id="d3"></div>
+      <div class="dot"    id="d4"></div>
+    </div>
+    <div class="prog"><div class="pf" id="pf"></div></div>
+  </div>
+
+<script>
+/* ══════════════════════════════
+   CANVAS 파티클 — 바다/별 느낌
+   (타임라인과 다른 파티클 특성)
+══════════════════════════════ */
+(function() {
+  const cv  = document.getElementById('canvas-bg');
+  const ctx = cv.getContext('2d');
+  let W, H;
+  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function mkPt() {
+    return {
+      x:    Math.random() * W,
+      y:    Math.random() * H,
+      vx:   (Math.random() - .5) * .09,
+      vy:   (Math.random() - .5) * .09,
+      r:    Math.random() * 1.4 + .22,
+      a:    Math.random() * .28 + .06,
+      life: Math.floor(Math.random() * 500),
+      max:  Math.random() * 340 + 280,
+      type: Math.random()  /* 0-0.5:gold, 0.5-0.8:ocean, 0.8-1:silver */
+    };
+  }
+
+  const pts = Array.from({ length: 110 }, mkPt);
+
+  (function loop() {
+    ctx.clearRect(0, 0, W, H);
+    pts.forEach((p, i) => {
+      p.x += p.vx; p.y += p.vy; p.life++;
+      if (p.x < -2 || p.x > W+2 || p.y < -2 || p.y > H+2 || p.life > p.max) {
+        pts[i] = mkPt(); return;
+      }
+      const fade = Math.sin(p.life / p.max * Math.PI);
+      let color;
+      if      (p.type < .48) color = `rgba(201,168,76,${p.a * fade})`;
+      else if (p.type < .78) color = `rgba(74,140,188,${p.a * .6 * fade})`;
+      else                   color = `rgba(220,228,240,${p.a * .45 * fade})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ══════════════════════════════
+   스토리 데이터 (내용 변경 없음)
+══════════════════════════════ */
+const stories = [
+  { num:'01', q:'왜 하필 인천이었을까?',
+    p1:'인천은 군사 전략가들에게 최악의 상륙 지점이었습니다. 조수 차이가 최대 9~10미터에 달하고, 넓은 갯벌과 좁은 수로가 상륙정의 좌초 위험을 높였습니다.',
+    p2:'그러나 맥아더 장군은 역발상을 했습니다. 적이 절대 예상하지 못할 곳, 그것이 바로 기습의 핵심이었습니다.' },
+  { num:'02', q:'불가능하다던 작전을\n왜 강행했을까?',
+    p1:'1950년 8월, 국군과 유엔군은 낙동강 방어선까지 밀려나 있었습니다. 성공 가능성이 5,000분의 1이라는 반대 의견도 있었습니다.',
+    p2:'그러나 맥아더 장군은 "그것이 바로 우리가 해야 하는 이유"라고 답했습니다. 1950년 9월 15일, 그 결단은 역사를 바꾸었습니다.' },
+  { num:'03', q:'새벽 바다를 건넌\n사람들은 누구였을까?',
+    p1:'인천상륙작전에는 미국 제1해병사단, 육군 제7사단, 대한민국 해병대를 포함한 유엔군 약 7만 5천 명이 참여했습니다.',
+    p2:'많은 이들이 위험을 알면서도 배에 올랐습니다. 두려움보다 더 큰 무언가가 있었습니다. 그 새벽 바다 위에 그들이 있었습니다.' },
+  { num:'04', q:'이 작전이 진짜 지킨 것은\n무엇이었을까?',
+    p1:'인천상륙작전 성공 13일 만인 9월 28일, 서울이 수복되었습니다. 전쟁이 시작된 지 3개월 만에 수도를 되찾은 것이었습니다.',
+    p2:'집을 잃었던 사람들이 돌아올 수 있었고, 헤어졌던 가족이 다시 만날 수 있었습니다. 이 작전이 지킨 것은 땅이 아니라 사람들의 삶이었습니다.' },
+  { num:'05', q:'우리는 오늘\n무엇을 기억해야 할까?',
+    p1:'오늘 우리가 누리는 평범한 하루. 자유롭게 걷는 거리, 가족과 나누는 식사, 내일을 계획하는 시간. 이 모든 것이 누군가의 결단과 희생 위에 있습니다.',
+    p2:'기억하는 것, 감사하는 것, 그것이 우리가 그들에게 할 수 있는 가장 작지만 가장 소중한 일입니다.' }
+];
+
+/* ══════════════════════════════
+   타이밍 — 앞면 4초 · 뒷면 6초
+══════════════════════════════ */
+const FRONT = 4000, FLIP = 1100, BACK = 7000, FADE = 450;
+const N = stories.length;
+let cur = 0, t1 = null, t2 = null;
+const wrap    = document.getElementById('card-wrap');
+const sceneEl = document.querySelector('.scene');
+
+/* 콘텐츠 업데이트 */
+function load(idx) {
+  const s = stories[idx];
+  document.getElementById('f-wm').textContent  = s.num;
+  document.getElementById('f-num').textContent = 'STORY   ' + s.num;
+  document.getElementById('f-q').innerHTML     = s.q.replace(/\n/g,'<br>');
+  document.getElementById('b-num').textContent = 'STORY   ' + s.num;
+  document.getElementById('b-p1').textContent  = s.p1;
+  document.getElementById('b-p2').textContent  = s.p2;
+  for (let i = 0; i < N; i++)
+    document.getElementById('d'+i).classList.toggle('on', i === idx);
+}
+
+/* 프로그레스 바 */
+function prog(color, dur, glow) {
+  const pf = document.getElementById('pf');
+  pf.style.transition = 'none'; pf.style.width = '0%';
+  pf.style.background = color;
+  pf.style.boxShadow  = '0 0 8px ' + glow;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    pf.style.transition = 'width ' + dur + 'ms linear';
+    pf.style.width = '100%';
+  }));
+}
+
+/* 앞면 단계 */
+function showFront() {
+  const ind = document.getElementById('phase-ind');
+  ind.classList.remove('answer'); ind.textContent = '질문';
+  prog('#c9a84c', FRONT, 'rgba(201,168,76,.55)');
+  clearTimeout(t1);
+  t1 = setTimeout(flipCard, FRONT);
+}
+
+/* 3D 뒤집기 → 뒷면 단계 */
+function flipCard() {
+  wrap.classList.add('flipped');
+  document.getElementById('phase-ind').classList.add('answer');
+  document.getElementById('phase-ind').textContent = '이야기';
+  clearTimeout(t2);
+  t2 = setTimeout(() => {
+    prog('#4a8cbc', BACK, 'rgba(74,140,188,.55)');
+    clearTimeout(t1);
+    t1 = setTimeout(nextStory, BACK);
+  }, FLIP + 60);
+}
+
+/* 다음 카드 전환
+   — opacity 페이드를 sceneEl(부모)에서 처리:
+     card-wrap 자체에 opacity 를 걸면 브라우저 컴포지터가
+     backface-visibility: hidden 을 무시해 앞면 글씨가 뒤집혀 보이는 현상 방지 */
+function nextStory() {
+  clearTimeout(t1); clearTimeout(t2);
+  sceneEl.style.transition = 'opacity ' + FADE + 'ms ease';
+  sceneEl.style.opacity    = '0';
+  setTimeout(() => {
+    wrap.style.transition = 'none';        /* 3D 리셋 즉시 적용 */
+    wrap.classList.remove('flipped');
+    void wrap.offsetWidth;                 /* reflow — 리셋 확정 */
+    wrap.style.transition = '';            /* 인라인 해제 → CSS 트랜지션 복원 */
+    cur = (cur + 1) % N;
+    load(cur);
+    requestAnimationFrame(() => {
+      sceneEl.style.transition = 'opacity ' + FADE + 'ms ease';
+      sceneEl.style.opacity    = '1';
+      setTimeout(showFront, FADE + 50);
+    });
+  }, FADE);
+}
+
+/* 초기화 */
+load(0);
+showFront();
+</script>
+</body>
+</html>

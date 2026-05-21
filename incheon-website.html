@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>인천상륙작전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Serif+KR:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width: 1280px;
+  height: 160px;
+  overflow: hidden;
+  background: #0B0808;
+  color: #F0EAE0;
+  user-select: none;
+}
+
+#bg-s {
+  position: fixed; inset: 0;
+  z-index: 1; pointer-events: none;
+}
+
+/* ── OPERATION CHROMITE 전환 플래시 ── */
+#op-flash {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 10px;
+  color: #D4AF37;
+  text-shadow: 0 0 30px rgba(212,175,55,0.5);
+  opacity: 0;
+  z-index: 58;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── 스캔라인 ── */
+#scan {
+  position: fixed; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(to bottom,
+    transparent 0%, rgba(240,234,224,0.0) 10%,
+    rgba(240,234,224,0.55) 40%, rgba(255,248,235,0.75) 50%,
+    rgba(240,234,224,0.55) 60%, rgba(240,234,224,0.0) 90%, transparent 100%);
+  box-shadow: 0 0 16px rgba(240,234,224,0.3), 0 0 44px rgba(240,234,224,0.1);
+  z-index: 60; pointer-events: none;
+  left: -5px; opacity: 0;
+}
+
+/* ── 상하 경계선 ── */
+.edge { position:fixed; left:0; right:0; height:1px; z-index:50; }
+.edge.t { top:0;
+  background: linear-gradient(90deg, transparent, rgba(240,234,224,0.18) 12%, rgba(240,234,224,0.18) 88%, transparent); }
+.edge.b { bottom:0;
+  background: linear-gradient(90deg, transparent, rgba(240,234,224,0.07) 20%, rgba(240,234,224,0.07) 80%, transparent); }
+
+/* ══ 전체 표면 ══ */
+#surface {
+  position: relative; z-index: 10;
+  width: 1280px; height: 160px;
+  display: flex; align-items: stretch;
+}
+
+/* ══════════════════════════════════════════
+   왼쪽 40% — 질문 + 세부내용
+══════════════════════════════════════════ */
+#left {
+  width: 40%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 18px 0 28px;
+  flex-shrink: 0; position: relative; overflow: hidden;
+  border-right: 1px solid rgba(240,234,224,0.07);
+}
+
+/* 대형 숫자 워터마크 — 220~260px, 화면 밖 클리핑 */
+#s-num {
+  position: absolute; right: -18px; bottom: -22px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 240px;
+  color: rgba(212,175,55,0.06);
+  letter-spacing: -8px; line-height: 1;
+  pointer-events: none; z-index: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* 좌상단 L자 코너 */
+#left::before {
+  content: '';
+  position: absolute; top: 12px; left: 16px;
+  width: 20px; height: 20px;
+  border-top: 2px solid rgba(212,175,55,0.45);
+  border-left: 2px solid rgba(212,175,55,0.45);
+}
+
+/* 스토리 태그 */
+#s-tag {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px; letter-spacing: 6px;
+  color: #D4AF37;
+  margin-bottom: 5px; opacity: 0;
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 9px;
+}
+#s-tag::after {
+  content: ''; flex: 1; max-width: 36px;
+  height: 1px; background: rgba(212,175,55,0.5);
+}
+
+/* 질문 — 42~48px, 화면 핵심 요소 */
+#s-q {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 44px; font-weight: 700;
+  line-height: 1.12; color: #F8F0E6;
+  letter-spacing: -0.8px;
+  max-height: 100px; overflow: hidden;
+  opacity: 0; position: relative; z-index: 1;
+}
+
+/* 세부 내용 */
+#s-detail {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 12px; font-weight: 400; line-height: 1.5;
+  color: rgba(210,170,150,0.7);
+  margin-top: 5px; max-height: 36px; overflow: hidden;
+  opacity: 0; position: relative; z-index: 1;
+}
+
+/* ══════════════════════════════════════════
+   중앙 38% — 타임라인
+══════════════════════════════════════════ */
+#center {
+  width: 38%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 14px 0 20px;
+  flex-shrink: 0; position: relative;
+  border-right: 1px solid rgba(240,234,224,0.05);
+}
+
+/* 활성 노드 세로 글로 */
+#active-glow {
+  position: absolute; top: 0; bottom: 0; width: 52px;
+  background: radial-gradient(ellipse 26px 80px at center,
+    rgba(212,175,55,0.18) 0%, rgba(212,175,55,0.06) 50%, transparent 100%);
+  pointer-events: none; z-index: 0;
+  transition: left 0.7s ease;
+}
+
+#tl-op {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 9px; letter-spacing: 5px;
+  color: rgba(240,234,224,0.18);
+  margin-bottom: 12px; position: relative; z-index: 1;
+}
+
+#tl {
+  display: flex; align-items: center; width: 100%;
+  position: relative; z-index: 1;
+}
+
+.nd {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 0 0 auto; position: relative;
+}
+
+.nd-date {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: rgba(150,110,100,0.38);
+  margin-bottom: 7px; transition: color 0.6s ease; white-space: nowrap;
+}
+.nd.done   .nd-date { color: rgba(150,110,100,0.62); }
+.nd.active .nd-date { color: rgba(212,175,55,0.95); font-size: 11px; }
+
+.nd-wrap {
+  position: relative; width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px;
+}
+
+/* 사각형 마커 — 16~20px */
+.nd-c {
+  width: 18px; height: 18px;
+  border-radius: 0;
+  border: 2px solid rgba(150,110,100,0.28);
+  background: #0B0808;
+  transition: width .5s ease, height .5s ease,
+    border-color .6s ease, background .6s ease, box-shadow .6s ease;
+  position: relative; z-index: 2;
+}
+.nd.done .nd-c {
+  border-color: rgba(212,175,55,0.4);
+  background: rgba(212,175,55,0.1);
+}
+.nd.active .nd-c {
+  width: 30px; height: 30px;
+  border-color: #D4AF37; background: #D4AF37;
+  box-shadow:
+    0 0 0 7px rgba(212,175,55,0.12),
+    0 0 26px rgba(212,175,55,0.55),
+    0 0 55px rgba(212,175,55,0.2);
+}
+
+.nd-ring {
+  position: absolute; inset: 0;
+  border: 1.5px solid rgba(212,175,55,0.45);
+  opacity: 0; pointer-events: none;
+}
+.nd.active .nd-ring { animation: sq-pulse 2.2s ease-out infinite; }
+@keyframes sq-pulse {
+  0%   { opacity:0.5; transform:scale(1); }
+  100% { opacity:0;   transform:scale(2.8); }
+}
+
+.nd-name {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 13px; font-weight: 600;
+  color: rgba(240,234,224,0.25); white-space: nowrap;
+  transition: color 0.6s ease;
+}
+.nd.done   .nd-name { color: rgba(240,234,224,0.55); }
+.nd.active .nd-name { color: #F8F0E6; font-size: 14px; }
+
+/* 경로 — 점선만, sheen 없음 */
+.path {
+  flex: 1; height: 2px;
+  margin-bottom: 20px;
+  position: relative; z-index: 1;
+}
+.path::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg,
+    rgba(150,110,100,0.2) 0px, rgba(150,110,100,0.2) 4px,
+    transparent 4px, transparent 10px);
+}
+.path.done::before { background: rgba(212,175,55,0.55); }
+
+/* ══════════════════════════════════════════
+   오른쪽 22% — 핵심 스탯 + 카운터 + 타이머
+══════════════════════════════════════════ */
+#right {
+  width: 22%;
+  display: flex; align-items: stretch;
+  flex-shrink: 0;
+}
+
+/* 세로 타이머 바 */
+#r-timer {
+  width: 5px;
+  background: rgba(240,234,224,0.04);
+  position: relative; flex-shrink: 0; overflow: hidden;
+}
+#r-timer-fill {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 0%;
+  background: linear-gradient(to top, #D4AF37, rgba(212,175,55,0.3));
+  transition: height 6s linear;
+}
+#r-timer-glow {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 0%;
+  background: linear-gradient(to top, rgba(212,175,55,0.5), transparent);
+  filter: blur(4px);
+  transition: height 6s linear;
+}
+
+/* 정보 영역 */
+#r-info {
+  flex: 1;
+  display: flex; flex-direction: column;
+  padding: 0 0 0 16px;
+  justify-content: center;
+}
+
+/* 핵심 스탯 — 60~72px, 오른쪽 가장 강한 요소 */
+#r-stat {
+  line-height: 1;
+}
+#r-stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 66px;
+  color: #F8F0E6;
+  letter-spacing: 0px;
+  display: block;
+  opacity: 0;
+  line-height: 0.95;
+}
+#r-stat-lbl {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 2px;
+  color: rgba(150,110,100,0.6);
+  text-transform: uppercase;
+  display: block;
+  margin-top: 3px;
+  opacity: 0;
+}
+
+/* 구분선 */
+#r-hr {
+  width: 30px; height: 1px;
+  background: rgba(212,175,55,0.38);
+  margin: 8px 0;
+}
+
+/* 카운터 */
+#r-cnt {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px; letter-spacing: 2px;
+  color: rgba(240,234,224,0.75);
+  line-height: 1;
+  display: flex; align-items: baseline; gap: 2px;
+}
+#r-cnt .slash { color: rgba(150,110,100,0.4); font-size: 14px; margin: 0 2px; }
+#r-cnt .total { color: rgba(150,110,100,0.4); font-size: 14px; }
+
+/* 날짜 */
+#r-mday {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px; letter-spacing: 2px;
+  color: rgba(240,234,224,0.5);
+  margin-top: 4px; line-height: 1;
+  opacity: 0;
+}
+
+/* 연도 */
+#r-year {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px; letter-spacing: 4px;
+  color: rgba(150,110,100,0.38);
+  margin-top: 3px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-s"></canvas>
+<div class="edge t"></div>
+<div class="edge b"></div>
+<div id="scan"></div>
+<div id="op-flash">OPERATION CHROMITE</div>
+
+<div id="surface">
+
+  <!-- 왼쪽: 스토리 질문 + 세부내용 -->
+  <div id="left">
+    <div id="s-num">01</div>
+    <div id="s-tag">STORY 01</div>
+    <div id="s-q">왜 인천이 선택되었을까?</div>
+    <div id="s-detail">조류 차 9미터, 성공 확률 5,000:1 — 맥아더는 그럼에도 인천을 선택했다</div>
+  </div>
+
+  <!-- 중앙: 타임라인 -->
+  <div id="center">
+    <div id="active-glow"></div>
+    <div id="tl-op">OPERATION CHROMITE — 1950</div>
+    <div id="tl">
+
+      <div class="nd" id="n0">
+        <div class="nd-date">09.01</div>
+        <div class="nd-wrap"><div class="nd-c"></div><div class="nd-ring"></div></div>
+        <div class="nd-name">작전 준비</div>
+      </div>
+      <div class="path" id="p0"></div>
+
+      <div class="nd" id="n1">
+        <div class="nd-date">09.15</div>
+        <div class="nd-wrap"><div class="nd-c"></div><div class="nd-ring"></div></div>
+        <div class="nd-name">인천 상륙</div>
+      </div>
+      <div class="path" id="p1"></div>
+
+      <div class="nd" id="n2">
+        <div class="nd-date">09.28</div>
+        <div class="nd-wrap"><div class="nd-c"></div><div class="nd-ring"></div></div>
+        <div class="nd-name">서울 탈환</div>
+      </div>
+      <div class="path" id="p2"></div>
+
+      <div class="nd" id="n3">
+        <div class="nd-date">10.01</div>
+        <div class="nd-wrap"><div class="nd-c"></div><div class="nd-ring"></div></div>
+        <div class="nd-name">38선 돌파</div>
+      </div>
+      <div class="path" id="p3"></div>
+
+      <div class="nd" id="n4">
+        <div class="nd-date">10.19</div>
+        <div class="nd-wrap"><div class="nd-c"></div><div class="nd-ring"></div></div>
+        <div class="nd-name">전세 역전</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 오른쪽: 핵심 스탯 + 타이머 -->
+  <div id="right">
+    <div id="r-timer">
+      <div id="r-timer-fill"></div>
+      <div id="r-timer-glow"></div>
+    </div>
+    <div id="r-info">
+      <div id="r-stat">
+        <span id="r-stat-val">5,000:1</span>
+        <span id="r-stat-lbl">성공 확률</span>
+      </div>
+      <div id="r-hr"></div>
+      <div id="r-cnt">
+        <span id="r-n">01</span>
+        <span class="slash">/</span>
+        <span class="total">05</span>
+      </div>
+      <div id="r-mday">09.01 · 1950</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── 데이터 ── */
+const DATA = [
+  {
+    num:'01', tag:'STORY 01',
+    q:'왜 인천이\n선택되었을까?',
+    detail:'조류 차 9미터, 성공 확률 5,000:1 — 맥아더는 그럼에도 인천을 선택했다',
+    stat:'5,000:1', statLbl:'성공 확률',
+    mday:'09.01', tl:0
+  },
+  {
+    num:'02', tag:'STORY 02',
+    q:'썰물이\n무기가 되다',
+    detail:'하루 두 번, 단 3시간의 만조 — 그 좁은 창을 비집어 상륙을 감행했다',
+    stat:'3H', statLbl:'작전 가능 시간',
+    mday:'09.15', tl:1
+  },
+  {
+    num:'03', tag:'STORY 03',
+    q:'75,000명\n15분 만에 상륙했다',
+    detail:'261척의 함정이 새벽을 가르며 돌진 — 역사상 가장 빠른 상륙 작전',
+    stat:'261척', statLbl:'투입 함정',
+    mday:'09.15', tl:2
+  },
+  {
+    num:'04', tag:'STORY 04',
+    q:'서울 수복\n단 13일',
+    detail:'보급로가 끊긴 북한군은 패주했다 — 9월 28일, 태극기가 다시 올랐다',
+    stat:'13일', statLbl:'수복 기간',
+    mday:'09.28', tl:3
+  },
+  {
+    num:'05', tag:'STORY 05',
+    q:'한 번의 결정이\n역사를 바꿨다',
+    detail:'낙동강 방어선에서 38선까지 — 전세가 완전히 뒤집혔다',
+    stat:'75,000', statLbl:'투입 병력',
+    mday:'10.19', tl:4
+  },
+];
+
+const DURATION = 6000;
+let cur = 0;
+
+const E = id => document.getElementById(id);
+const elNum      = E('s-num');
+const elTag      = E('s-tag');
+const elQ        = E('s-q');
+const elDetail   = E('s-detail');
+const elStatVal  = E('r-stat-val');
+const elStatLbl  = E('r-stat-lbl');
+const elMday     = E('r-mday');
+const elRN       = E('r-n');
+const elNds      = document.querySelectorAll('.nd');
+const elPths     = document.querySelectorAll('.path');
+const elTimerF   = E('r-timer-fill');
+const elTimerG   = E('r-timer-glow');
+const elGlow     = E('active-glow');
+const elScan     = E('scan');
+const elFlash    = E('op-flash');
+
+/* 글로 위치 */
+function updateGlow(idx) {
+  const node   = elNds[idx];
+  const center = E('center');
+  const nRect  = node.getBoundingClientRect();
+  const cRect  = center.getBoundingClientRect();
+  elGlow.style.left = (nRect.left + nRect.width / 2 - cRect.left - 26) + 'px';
+}
+
+/* 타임라인 */
+function setTl(idx) {
+  elNds.forEach((n,i) => {
+    n.classList.remove('done','active');
+    if(i <= idx) n.classList.add('done');
+    if(i === idx) n.classList.add('active');
+  });
+  elPths.forEach((p,i) => p.classList.toggle('done', i < idx));
+  setTimeout(() => updateGlow(idx), 60);
+}
+
+/* 카운터 */
+function setCnt(idx) {
+  elRN.textContent = String(idx+1).padStart(2,'0');
+}
+
+/* 세로 타이머 리셋 */
+function resetTimer() {
+  elTimerF.style.transition = 'none';
+  elTimerG.style.transition = 'none';
+  elTimerF.style.height = '0%';
+  elTimerG.style.height = '0%';
+  void elTimerF.offsetWidth;
+  elTimerF.style.transition = `height ${DURATION}ms linear`;
+  elTimerG.style.transition = `height ${DURATION}ms linear`;
+  elTimerF.style.height = '100%';
+  elTimerG.style.height = '100%';
+}
+
+/* 스캔라인 */
+function fireScan() {
+  elScan.style.transition = 'none';
+  elScan.style.left = '-5px';
+  elScan.style.opacity = '0';
+  requestAnimationFrame(() => {
+    elScan.style.opacity = '1';
+    elScan.style.transition = 'left 0.85s cubic-bezier(0.4,0,0.6,1)';
+    elScan.style.left = '1285px';
+    setTimeout(() => {
+      elScan.style.transition = 'opacity 0.25s ease';
+      elScan.style.opacity = '0';
+    }, 850);
+  });
+}
+
+/* 데이터 적용 */
+function apply(d) {
+  elNum.textContent     = d.num;
+  elTag.textContent     = d.tag;
+  elQ.innerHTML         = d.q.replace(/\n/g,'<br>');
+  elDetail.textContent  = d.detail;
+  elStatVal.textContent = d.stat;
+  elStatLbl.textContent = d.statLbl;
+  elMday.textContent    = d.mday + ' · 1950';
+  setTl(d.tl);
+  setCnt(cur);
+}
+
+/* 전환 */
+function transition(d) {
+  fireScan();
+  const lefts = [elTag, elQ, elDetail];
+  const rights = [elStatVal, elStatLbl, elMday];
+
+  lefts.forEach(el => {
+    el.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+    el.style.opacity = '0'; el.style.transform = 'translateY(3px)';
+  });
+  rights.forEach(el => {
+    el.style.transition = 'opacity 0.3s ease';
+    el.style.opacity = '0';
+  });
+  elNum.style.transition = 'opacity 0.35s ease';
+  elNum.style.opacity = '0';
+
+  setTimeout(() => {
+    elFlash.style.transition = 'opacity 0.12s ease';
+    elFlash.style.opacity = '1';
+    setTimeout(() => {
+      elFlash.style.transition = 'opacity 0.15s ease';
+      elFlash.style.opacity = '0';
+      apply(d);
+      lefts.forEach(el => { el.style.transform = 'translateY(-2px)'; });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        lefts.forEach((el,i) => {
+          el.style.transition = `opacity 0.65s ease ${i*0.09}s, transform 0.65s ease ${i*0.09}s`;
+          el.style.opacity = '1'; el.style.transform = 'translateY(0)';
+        });
+        rights.forEach((el,i) => {
+          el.style.transition = `opacity 0.6s ease ${0.1 + i*0.07}s`;
+          el.style.opacity = '1';
+        });
+        elNum.style.transition = 'opacity 0.9s ease';
+        elNum.style.opacity = '1';
+      }));
+      resetTimer();
+    }, 300);
+  }, 400);
+}
+
+/* 초기화 */
+function init() {
+  apply(DATA[0]);
+  const all = [elTag, elQ, elDetail, elStatVal, elStatLbl, elMday];
+  all.forEach(el => { el.style.opacity='0'; el.style.transform='translateY(5px)'; });
+  elNum.style.opacity = '0';
+
+  setTimeout(() => {
+    all.forEach((el,i) => {
+      el.style.transition = `opacity 1s ease ${i*0.11}s, transform 1s ease ${i*0.11}s`;
+      el.style.opacity = '1'; el.style.transform = 'translateY(0)';
+    });
+    elNum.style.transition = 'opacity 1.3s ease';
+    elNum.style.opacity = '1';
+    resetTimer();
+    updateGlow(0);
+  }, 280);
+
+  setInterval(() => {
+    cur = (cur + 1) % DATA.length;
+    transition(DATA[cur]);
+  }, DURATION);
+}
+
+/* ── 배경 캔버스 ── */
+function initBg() {
+  const cs = E('bg-s');
+  const xs = cs.getContext('2d');
+  cs.width = 1280; cs.height = 160;
+
+  /* 중심 따뜻한 빛 */
+  const g = xs.createRadialGradient(500, 80, 0, 500, 80, 400);
+  g.addColorStop(0, 'rgba(140,30,20,0.055)');
+  g.addColorStop(1, 'rgba(11,8,8,0)');
+  xs.fillStyle = g; xs.fillRect(0,0,1280,160);
+
+  /* 해안 등고선 2개 */
+  xs.strokeStyle = 'rgba(140,100,90,0.042)';
+  xs.lineWidth = 0.8;
+  [0,1].forEach(i => {
+    xs.beginPath(); xs.moveTo(0, 38 + i*60);
+    for(let px=0; px<=1280; px+=24) {
+      const w = Math.sin(px/220 + i*1.3)*9 + Math.cos(px/400 + i*0.7)*5;
+      xs.lineTo(px, 38 + i*60 + w);
+    }
+    xs.stroke();
+  });
+
+  /* 비네팅 */
+  const v = (x0,y0,x1,y1,a,b) => {
+    const gg = xs.createLinearGradient(x0,y0,x1,y1);
+    gg.addColorStop(0,a); gg.addColorStop(1,b); return gg;
+  };
+  xs.fillStyle = v(0,0,95,0,'rgba(11,8,8,0.88)','rgba(11,8,8,0)');
+  xs.fillRect(0,0,95,160);
+  xs.fillStyle = v(1185,0,1280,0,'rgba(11,8,8,0)','rgba(11,8,8,0.82)');
+  xs.fillRect(1185,0,95,160);
+  xs.fillStyle = v(0,0,0,55,'rgba(11,8,8,0.72)','rgba(11,8,8,0)');
+  xs.fillRect(0,0,1280,55);
+  xs.fillStyle = v(0,105,0,160,'rgba(11,8,8,0)','rgba(11,8,8,0.68)');
+  xs.fillRect(0,105,1280,55);
+}
+
+initBg();
+init();
+</script>
+</body>
+</html>
