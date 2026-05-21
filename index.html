@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>마지막 배를 기다리는 사람들 — 흥남철수 1950</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Bebas+Neue&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+:root {
+  --bg-deep:      #07080E;
+  --text-1:       #D2CCB8;
+  --text-2:       #636E7A;
+  --text-dim:     rgba(160,155,145,0.32);
+  --gold:         #B49048;
+  --gold-dim:     rgba(180,144,72,0.20);
+  --border:       rgba(120,115,105,0.09);
+  --border-gold:  rgba(180,144,72,0.18);
+  --panel-bg:     rgba(9,11,18,0.98);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width: 1280px; height: 160px;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--text-1);
+  font-family: 'Noto Serif KR', serif;
+  user-select: none;
+}
+
+/* ═══════════════════════════════
+   전체 상단 금색 선
+═══════════════════════════════ */
+#top-rule {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(180,144,72,0.55) 6%,
+    rgba(180,144,72,0.95) 28%, rgba(180,144,72,0.95) 72%,
+    rgba(180,144,72,0.55) 94%, transparent 100%);
+  z-index: 500; pointer-events: none;
+}
+
+/* ═══════════════════════════════
+   오버레이
+═══════════════════════════════ */
+#grain {
+  position: fixed; inset: 0;
+  width: 1280px; height: 160px;
+  z-index: 100; pointer-events: none; opacity: 0.044;
+}
+
+#vignette {
+  position: fixed; inset: 0; z-index: 99; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(3,4,9,0.65) 100%);
+}
+
+#fade-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #050609;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+#fade-overlay.active { opacity: 1; pointer-events: all; }
+
+/* 선택 긴장감 오버레이 — 2~3% 밝기 감소, 0.2초 복귀 */
+#tension-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,1);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.08s ease;
+}
+#tension-overlay.flash { opacity: 0.03; }
+
+/* ═══════════════════════════════
+   레이아웃 — 3분할
+═══════════════════════════════ */
+#app {
+  position: relative; z-index: 10;
+  width: 1280px; height: 160px;
+  display: flex;
+  opacity: 0; transition: opacity 1.2s ease;
+}
+#app.ready { opacity: 1; }
+
+/* ═══════════════════════════════
+   왼쪽 패널 — 작전 기록부 20%
+═══════════════════════════════ */
+#panel-left {
+  width: 20%; height: 160px;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--border);
+  padding: 10px 14px 8px 16px;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+#panel-left::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(180,144,72,0.2) 100%);
+}
+
+.l-record {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8.5px; letter-spacing: 3.5px;
+  color: var(--text-2); line-height: 1;
+  margin-bottom: 5px; flex-shrink: 0; opacity: 0.8;
+}
+.l-date {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: 3px;
+  color: var(--gold); line-height: 1.2; flex-shrink: 0;
+}
+.l-location {
+  font-size: 22px; font-weight: 700;
+  color: var(--text-1); line-height: 1.1;
+  margin-top: 2px; letter-spacing: 1px; flex-shrink: 0;
+}
+.l-sep {
+  width: 100%; height: 1px;
+  background: var(--border);
+  margin: 5px 0; flex-shrink: 0;
+}
+.l-bg {
+  font-size: 11.5px; font-weight: 300;
+  line-height: 1.6; color: rgba(210,204,184,0.80);
+  display: -webkit-box;
+  -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; word-break: keep-all;
+  flex-shrink: 0; flex: 1;
+}
+.l-data {
+  margin-top: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 0.5px;
+  color: var(--text-2); line-height: 1.5;
+  padding-top: 4px; border-top: 1px solid var(--border); flex-shrink: 0;
+}
+#l-hist {
+  font-size: 10.5px; color: var(--gold); opacity: 0.88;
+  margin-bottom: 2px; line-height: 1.45; letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════
+   중앙 패널 — 장면 현장 55%
+═══════════════════════════════ */
+#panel-center {
+  width: 55%; height: 160px;
+  background: #07090F;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+#scene-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; z-index: 0;
+}
+#scene-bg-img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center center;
+  background-color: transparent;
+  z-index: 1; opacity: 0;
+  transition: opacity 0.8s ease;
+  filter: brightness(2.4) contrast(1.08);
+}
+#scene-bg-img::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 42%, rgba(180,144,72,0.06) 0%, transparent 50%),
+    rgba(8,13,22,0.62);
+  pointer-events: none;
+}
+#snow-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 2; pointer-events: none;
+}
+#panel-center::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 75%;
+  background: linear-gradient(to bottom,
+    transparent 0%, rgba(7,9,15,0.78) 48%, rgba(7,9,15,0.97) 100%);
+  z-index: 3; pointer-events: none;
+}
+.c-content {
+  position: absolute; inset: 0; z-index: 4;
+  display: flex; flex-direction: column;
+  padding: 10px 22px 12px;
+}
+.c-counter {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10.5px; letter-spacing: 4.5px;
+  color: var(--gold); opacity: 0.75; line-height: 1.2; flex-shrink: 0;
+}
+.c-sep {
+  width: 44px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), rgba(180,144,72,0.1));
+  margin: 5px 0 3px; flex-shrink: 0;
+}
+/* 장면별 역사 문장 */
+.c-hist-note {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; font-style: italic;
+  color: rgba(180,144,72,0.65);
+  letter-spacing: 0.4px; line-height: 1.2;
+  margin-bottom: 3px; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 620px;
+}
+.c-title {
+  font-size: 29px; font-weight: 700;
+  color: var(--text-1); line-height: 1.1; letter-spacing: 0.5px;
+  text-shadow: 0 2px 32px rgba(0,0,0,1), 0 0 70px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.8);
+  flex-shrink: 0;
+}
+.c-story {
+  margin-top: auto;
+  font-size: 14.5px; font-weight: 400; line-height: 1.75;
+  color: rgba(210,204,184,0.88);
+  display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; word-break: keep-all;
+  text-shadow: 0 1px 18px rgba(0,0,0,1); max-width: 640px;
+}
+
+/* 기록물 도장 — 우하단, 매우 희미 */
+#doc-stamp {
+  position: absolute; right: 13px; bottom: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7px; letter-spacing: 1.5px;
+  color: rgba(180,144,72,0.10);
+  line-height: 1.85; pointer-events: none;
+  text-align: right;
+  transform: rotate(0.6deg);
+}
+
+/* ═══════════════════════════════
+   오른쪽 패널 — 선택의 순간 25%
+═══════════════════════════════ */
+#panel-right {
+  width: 25%; height: 160px;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--border);
+  padding: 8px 12px 7px 14px;
+  display: flex; flex-direction: column;
+  flex-shrink: 0; position: relative; overflow: hidden;
+}
+#panel-right::before {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 2px; height: 100%;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(180,144,72,0.12) 100%);
+}
+.r-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 11px; letter-spacing: 5px;
+  color: var(--text-2); line-height: 1.2;
+  margin-bottom: 7px; flex-shrink: 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(180,144,72,0.15);
+}
+#choices-list {
+  display: flex; flex-direction: column; gap: 2px; flex-shrink: 0;
+}
+.choice-item {
+  display: flex; align-items: center; gap: 10px;
+  height: 34px; padding: 0 10px 0 14px;
+  border: none; border-bottom: 1px solid rgba(120,115,105,0.08);
+  background: transparent; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: background 0.18s ease, opacity 0.3s ease;
+  flex-shrink: 0;
+}
+.choice-item::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: rgba(180,144,72,0.22);
+  transition: background 0.2s ease, width 0.18s ease;
+}
+.choice-item:hover:not(.disabled):not(.selected) { background: rgba(180,144,72,0.06); }
+.choice-item:hover:not(.disabled):not(.selected)::before { background: rgba(180,144,72,0.65); width: 4px; }
+.choice-item.selected { background: rgba(180,144,72,0.10); }
+.choice-item.selected::before { background: rgba(180,144,72,1); width: 4px; }
+.choice-item.disabled { opacity: 0.14; cursor: default; pointer-events: none; }
+.ch-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11.5px; color: var(--text-2);
+  line-height: 1; flex-shrink: 0; width: 14px; opacity: 0.9;
+  transition: color 0.2s ease;
+}
+.choice-item.selected .ch-num { color: var(--gold); opacity: 1; }
+.ch-text {
+  font-size: 13.5px; font-weight: 600;
+  line-height: 1.3; color: var(--text-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+#bottom-area {
+  position: relative;
+  display: flex; align-items: center;
+  margin-top: 5px; height: 20px; flex-shrink: 0;
+}
+/* 선택 전 입력 힌트 */
+#input-hint {
+  position: absolute; inset: 0;
+  display: flex; align-items: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 3.5px;
+  color: rgba(140,135,125,0.28);
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+#result-line {
+  flex: 1;
+  font-size: 13px; font-style: italic; font-weight: 400;
+  color: rgba(210,204,184,0.90);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 20px; letter-spacing: 0.3px;
+  opacity: 0; transition: opacity 0.6s ease;
+}
+#result-line.visible { opacity: 1; }
+#result-line.visible::before {
+  content: '— ';
+  color: var(--gold); opacity: 0.75; font-style: normal;
+}
+
+/* ═══════════════════════════════
+   엔딩 오버레이
+═══════════════════════════════ */
+#ending-overlay {
+  position: fixed; inset: 0;
+  width: 1280px; height: 160px;
+  background: rgba(4,5,10,0.98);
+  display: none; flex-direction: row;
+  align-items: center; justify-content: center;
+  gap: 72px; padding: 0 110px;
+  z-index: 160;
+  opacity: 0; transition: opacity 1s ease;
+}
+#ending-overlay.visible { display: flex; }
+#ending-overlay.show    { opacity: 1; }
+
+.e-seq {
+  font-size: 12.5px; font-weight: 300;
+  color: var(--text-2); line-height: 1.65; letter-spacing: 0.3px;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+.e-seq.show { opacity: 1; }
+#e-line4 {
+  font-style: italic; font-size: 11.5px;
+  color: rgba(180,144,72,0.75); margin-top: 6px;
+}
+#e-main {
+  font-size: 21px; font-weight: 700;
+  color: var(--text-1); line-height: 1.25; margin-top: 10px; letter-spacing: 0.5px;
+  opacity: 0; transition: opacity 0.8s ease;
+  text-shadow: 0 0 40px rgba(180,144,72,0.22);
+}
+#e-main.show { opacity: 1; }
+#ending-text {
+  display: flex; flex-direction: column;
+  align-items: flex-start; text-align: left; justify-content: center; flex: 1;
+}
+#e-restart {
+  margin-top: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: 6px; color: var(--gold);
+  cursor: pointer; border: 1px solid transparent; padding: 2px 0;
+  opacity: 0; transition: opacity 0.8s ease;
+}
+#e-restart:hover { border-color: var(--border-gold); padding: 2px 10px; }
+#e-restart.show  { opacity: 0.78; }
+#ending-qr {
+  flex-shrink: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 7px;
+  opacity: 0; transition: opacity 0.8s ease 0.4s;
+}
+#ending-qr.show { opacity: 1; }
+#qr-code canvas, #qr-code img {
+  display: block; width: 90px !important; height: 90px !important;
+  image-rendering: pixelated;
+}
+.qr-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9.5px; letter-spacing: 2px;
+  color: var(--text-2); text-align: center; white-space: nowrap;
+}
+
+/* ═══════════════════════════════
+   시작 대기 화면
+═══════════════════════════════ */
+@keyframes promptPulse {
+  0%, 100% { opacity: 0.45; }
+  50%       { opacity: 1;    }
+}
+#start-screen {
+  position: fixed; top: 0; left: 0;
+  width: 1280px; height: 160px;
+  background: var(--bg-deep);
+  display: none; flex-direction: row;
+  align-items: stretch;
+  z-index: 350;
+  opacity: 0; transition: opacity 0.9s ease;
+  cursor: pointer;
+}
+#start-screen.visible { display: flex; }
+#start-screen.show    { opacity: 1; }
+#ss-left {
+  width: 22%; flex-shrink: 0;
+  padding: 12px 16px 10px 18px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative;
+}
+#ss-left::before {
+  content: '';
+  position: absolute; left: 0; top: 0; width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(180,144,72,0.15) 100%);
+}
+.ss-mono {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 3.5px;
+  color: var(--text-2); opacity: 0.75; margin-bottom: 5px;
+}
+.ss-date {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px; letter-spacing: 3px; color: var(--gold); line-height: 1.2;
+}
+.ss-place {
+  font-size: 23px; font-weight: 700;
+  color: var(--text-1); letter-spacing: 1px; margin-top: 2px; line-height: 1.15;
+}
+.ss-sep {
+  width: 100%; height: 1px;
+  background: var(--border); margin: 6px 0;
+}
+.ss-info {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; color: var(--text-2); letter-spacing: 0.5px; opacity: 0.6;
+}
+#ss-center {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 0 48px; text-align: center;
+}
+.ss-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 5px;
+  color: var(--gold); opacity: 0.6; margin-bottom: 8px; line-height: 1;
+}
+.ss-title {
+  font-size: 30px; font-weight: 700;
+  color: var(--text-1); letter-spacing: 1px; line-height: 1.12;
+  text-shadow: 0 2px 36px rgba(0,0,0,1), 0 0 80px rgba(180,144,72,0.08);
+}
+.ss-divider {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 9px 0; opacity: 0.6;
+}
+.ss-sub {
+  font-size: 12.5px; font-weight: 300;
+  color: rgba(160,154,138,0.65); letter-spacing: 0.3px; line-height: 1.5;
+}
+#ss-right {
+  width: 22%; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 5px; position: relative;
+}
+#ss-right::before {
+  content: '';
+  position: absolute; right: 0; top: 0; width: 2px; height: 100%;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(180,144,72,0.12) 100%);
+}
+#ss-prompt {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 5px;
+  animation: promptPulse 2.4s ease-in-out infinite;
+}
+.ssp-icon {
+  font-size: 18px; color: var(--gold); line-height: 1;
+}
+.ssp-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px; letter-spacing: 6px;
+  color: var(--text-1); line-height: 1;
+}
+.ssp-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px; letter-spacing: 2.5px;
+  color: var(--text-2); margin-top: 2px;
+}
+
+/* ═══════════════════════════════
+   오프닝 오버레이
+═══════════════════════════════ */
+#opening-overlay {
+  position: fixed; inset: 0;
+  width: 1280px; height: 160px; background: #04050A;
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 300; text-align: center;
+  opacity: 0; transition: opacity 0.9s ease;
+}
+#opening-overlay.show { opacity: 1; }
+.o-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10.5px; letter-spacing: 6px; color: var(--gold); opacity: 0.75; margin-bottom: 7px;
+}
+.o-date {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px; letter-spacing: 8px;
+  color: rgba(180,144,72,0.92); margin-bottom: 4px;
+}
+.o-place {
+  font-size: 44px; font-weight: 700;
+  color: var(--text-1); line-height: 1.05; letter-spacing: 5px;
+}
+.o-divider {
+  width: 56px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 8px auto 7px; opacity: 0.75;
+}
+.o-sub {
+  font-size: 14px; font-weight: 300;
+  color: rgba(160,154,138,0.82); line-height: 1.85; letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════
+   장면 전환 문장
+═══════════════════════════════ */
+#transition-text {
+  position: fixed; top: 35px; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 205;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 18px; font-style: italic; font-weight: 300;
+  color: rgba(212,206,188,0.94);
+  text-align: center; pointer-events: none; white-space: nowrap;
+  text-shadow: 0 0 44px rgba(180,144,72,0.22);
+  opacity: 0; transition: opacity 0.5s ease; letter-spacing: 1px;
+}
+#transition-text.visible { opacity: 1; }
+
+/* ═══════════════════════════════
+   데모 / 키보드 힌트
+═══════════════════════════════ */
+#demo-indicator {
+  position: fixed; top: 148px; right: 9px; z-index: 120;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 3px;
+  color: rgba(140,135,125,0.22);
+  pointer-events: none; opacity: 0; transition: opacity 0.6s ease;
+}
+#demo-indicator.show { opacity: 1; }
+
+#hint-overlay {
+  position: fixed; top: 0; left: 0; width: 1280px; height: 160px; z-index: 50;
+  display: none; flex-direction: row;
+  align-items: center; justify-content: center; gap: 80px;
+  background: rgba(4,6,12,0.72);
+  pointer-events: none; opacity: 0; transition: opacity 0.6s ease;
+}
+#hint-overlay.visible { display: flex; }
+#hint-overlay.show    { opacity: 1; }
+.hint-key { text-align: center; }
+.hk-keys {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px; letter-spacing: 4px;
+  color: var(--gold); display: block; line-height: 1.2;
+}
+.hk-desc {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9.5px; letter-spacing: 3px;
+  color: var(--text-2); display: block; margin-top: 6px;
+}
+</style>
+</head>
+<body>
+
+<div id="top-rule"></div>
+
+<!-- 시작 대기 화면 -->
+<div id="start-screen">
+  <div id="ss-left">
+    <div class="ss-mono">흥남철수 체험 전시</div>
+    <div class="ss-date">1950 · 12</div>
+    <div class="ss-place">흥남항</div>
+    <div class="ss-sep"></div>
+    <div class="ss-info">피난민 105,000명 · 함정 193척 · 10일</div>
+  </div>
+  <div id="ss-center">
+    <div class="ss-label">INTERACTIVE EXHIBITION</div>
+    <div class="ss-title">마지막 배를 기다리는 사람들</div>
+    <div class="ss-divider"></div>
+    <div class="ss-sub">전쟁이 닥쳐왔습니다 — 당신은 지금 그 10만 명 중 한 명입니다</div>
+  </div>
+  <div id="ss-right">
+    <div id="ss-prompt">
+      <div class="ssp-icon">▶</div>
+      <div class="ssp-main">체험 시작</div>
+      <div class="ssp-sub">버튼을 누르세요</div>
+    </div>
+  </div>
+</div>
+
+<!-- 오프닝 오버레이 -->
+<div id="opening-overlay">
+  <div class="o-label">흥남철수 체험 전시</div>
+  <div class="o-date">1950년 12월</div>
+  <div class="o-place">흥남</div>
+  <div class="o-divider"></div>
+  <div class="o-sub">수많은 사람들이 마지막 배를 기다렸습니다</div>
+  <div class="o-sub" style="margin-top:2px;opacity:0.6;font-size:11px;">당신도 지금, 그 중 한 명입니다</div>
+</div>
+
+<canvas id="grain"></canvas>
+<div id="vignette"></div>
+<div id="fade-overlay"></div>
+<div id="tension-overlay"></div>
+<div id="transition-text"></div>
+<div id="demo-indicator">AUTO</div>
+
+<div id="hint-overlay">
+  <div class="hint-key">
+    <span class="hk-keys">1 · 2 · 3</span>
+    <span class="hk-desc">선택</span>
+  </div>
+  <div class="hint-key">
+    <span class="hk-keys">R</span>
+    <span class="hk-desc">처음으로</span>
+  </div>
+</div>
+
+<!-- ══ 메인 앱 ══ -->
+<div id="app">
+
+  <!-- 왼쪽: 작전 기록부 -->
+  <div id="panel-left">
+    <div class="l-record">작전 기록 · FIELD LOG</div>
+    <div class="l-date"     id="l-date"></div>
+    <div class="l-location" id="l-location"></div>
+    <div class="l-sep"></div>
+    <div class="l-bg" id="l-bg"></div>
+    <div class="l-data">
+      <div id="l-hist"></div>
+      피난민 105,000명 · 함정 193척 · 10일
+    </div>
+  </div>
+
+  <!-- 중앙: 현장 -->
+  <div id="panel-center">
+    <canvas id="scene-canvas"></canvas>
+    <div id="scene-bg-img"></div>
+    <canvas id="snow-canvas"></canvas>
+    <!-- 기록물 도장 워터마크 -->
+    <div id="doc-stamp"></div>
+    <div class="c-content">
+      <div class="c-counter"   id="c-counter"></div>
+      <div class="c-sep"></div>
+      <div class="c-hist-note" id="c-hist-note"></div>
+      <div class="c-title"     id="c-title"></div>
+      <div class="c-story"     id="c-story"></div>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 선택의 순간 -->
+  <div id="panel-right">
+    <div class="r-label">지금 당신이라면</div>
+    <div id="choices-list">
+      <div class="choice-item" data-idx="0">
+        <span class="ch-num">01</span>
+        <span class="ch-text" id="ct0"></span>
+      </div>
+      <div class="choice-item" data-idx="1">
+        <span class="ch-num">02</span>
+        <span class="ch-text" id="ct1"></span>
+      </div>
+      <div class="choice-item" data-idx="2">
+        <span class="ch-num">03</span>
+        <span class="ch-text" id="ct2"></span>
+      </div>
+    </div>
+    <div id="bottom-area">
+      <div id="input-hint">1 · 2 · 3</div>
+      <div id="result-line"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ 엔딩 오버레이 ══ -->
+<div id="ending-overlay">
+  <div id="ending-text">
+    <div id="e-line1" class="e-seq">1950년 12월 24일, 마지막 배가 흥남을 떠났습니다.</div>
+    <div id="e-line2" class="e-seq">살아서 남쪽 땅을 밟은 사람 — 105,000명.</div>
+    <div id="e-line3" class="e-seq">그 중 고향으로 돌아온 사람은 없었습니다.</div>
+    <div id="e-line4" class="e-seq">흥남철수는 그렇게 역사가 되었습니다.</div>
+    <div id="e-main"></div>
+    <div id="e-restart">R &nbsp;·&nbsp; 다시 체험하기</div>
+  </div>
+  <div id="ending-qr">
+    <div id="qr-code"></div>
+    <div class="qr-label">이 QR로 직접 체험</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   장면 데이터
+   mem: 'family' | 'help' | 'observe' — 화면 미표시
+   histNote: 장면별 짧은 역사 문장
+═══════════════════════════════════════════ */
+const SCENES = [
+  {
+    num: '01', title: '얼어붙은 흥남',
+    date: '1950 · 12 · 14', location: '흥남항',
+    histFact: '중공군 30만이 남하하자, UN군은 흥남 철수를 결정했습니다',
+    histNote: '많은 사람들은 언제 다시 고향에 돌아올 수 있을지 알지 못했습니다.',
+    background: '함경남도 흥남항. 중공군의 남하로 피난민 수만 명이 남쪽으로 향할 배를 기다렸다.',
+    story: '전쟁이 밀려왔다. 당신은 가족을 데리고 흥남항까지 걸어왔다. 배를 타지 못하면 이 자리에 남겨진다.',
+    choices: [
+      { text: '가족을 찾는다',           result: '서로의 얼굴을 확인했다. 모두 살아있었다.',    mem: 'family'  },
+      { text: '옆에 선 사람에게 말을 건다', result: '낯선 이들과 눈빛이 마주쳤다.',            mem: 'observe' },
+      { text: '들고 온 짐을 내려놓는다', result: '이것이 우리가 가진 전부였다.',               mem: 'observe' }
+    ]
+  },
+  {
+    num: '02', title: '부두로 가는 길',
+    date: '1950 · 12 · 15', location: '흥남 시내',
+    histFact: '영하 20도의 혹한 속에 피난민 행렬이 수 킬로미터에 달했습니다',
+    histNote: '영하 20도의 혹한 속에서도 사람들은 걸음을 멈추지 않았습니다.',
+    background: '영하의 추위 속에 피난민들이 흥남 부두를 향해 걸었다. 길 위의 눈이 단단하게 굳어 있었다.',
+    story: '발이 감각을 잃어가고 있었다. 행렬은 끝이 보이지 않았다. 배에 탈 수 있을지, 아무도 알려주지 않았다.',
+    choices: [
+      { text: '가족 손을 꼭 잡는다', result: '차가운 손이었지만 꼭 잡았다.',         mem: 'family'  },
+      { text: '주변을 살핀다',       result: '쓰러진 사람들과 버려진 짐들이 보였다.', mem: 'observe' },
+      { text: '짐을 다시 챙긴다',    result: '그것이 우리 삶의 전부였다.',            mem: 'family'  }
+    ]
+  },
+  {
+    num: '03', title: '끝없는 줄',
+    date: '1950 · 12 · 17', location: '흥남 부두',
+    histFact: '미 10군단은 피난민을 태우기 위해 군수 물자를 바다에 버렸습니다',
+    histNote: '이름 없는 수만 명의 사람들이 그 자리에 서 있었습니다.',
+    background: '부두 앞에 수만 명의 피난민이 뒤엉켜 있었다. 미군과 UN군이 선박 확보를 위해 분주했다.',
+    story: '부두를 가득 메운 사람들 사이로 미군이 분주히 움직였다. 저 불빛이 배라면 — 과연 얼마나 탈 수 있을까.',
+    choices: [
+      { text: '그 자리에서 기다린다',      result: '자리를 지키는 것만으로도 힘이 들었다.',                    mem: 'observe' },
+      { text: '아이를 도와준다',           result: '그 아이의 눈이 조용히 당신을 바라봤다.',                   mem: 'help'    },
+      { text: '군인들의 말을 들으려 한다', result: '그들의 말은 알아들을 수 없었다. 배는 그 자리에 있었다.',   mem: 'observe' }
+    ]
+  },
+  {
+    num: '04', title: '마지막 승선',
+    date: '1950 · 12 · 23', location: '흥남 부두',
+    histFact: '메러디스 빅토리호, 정원 60명의 배에 14,000명이 올랐습니다',
+    histNote: '그 배에는 정원의 200배가 넘는 사람들이 탔습니다.',
+    background: '메러디스 빅토리호는 정원을 훨씬 넘긴 14,000명의 피난민을 태웠다. 기적 같은 일이었다.',
+    story: '드디어 당신 차례가 왔다. 갑판에 올라서자 발 디딜 틈이 없었다. 뒤를 돌아보니 부두는 아직 사람들로 가득했다.',
+    choices: [
+      { text: '가족과 함께 이동한다', result: '배 위에 섰다는 것이 실감나지 않았다.',        mem: 'family'  },
+      { text: '주변 사람을 돕는다',   result: '손을 내밀었다. 그것이 사람이 할 수 있는 일이었다.', mem: 'help'    },
+      { text: '뒤를 돌아본다',        result: '아직 남은 사람들이 눈에 밟혔다.',             mem: 'observe' }
+    ]
+  },
+  {
+    num: '05', title: '남쪽으로 향하는 배',
+    date: '1950 · 12 · 24', location: '흥남 앞바다',
+    histFact: '약 105,000명이 남쪽 땅을 밟았습니다 — 크리스마스 이브',
+    histNote: '1950년 12월 24일, 크리스마스 이브였습니다.',
+    background: '흥남철수 작전 최종일. 약 105,000명의 피난민이 이 작전으로 남쪽 땅을 밟았다.',
+    story: '배가 천천히 흥남항을 떠난다. 차가운 바닷바람이 불어온다. 고향이 점점 멀어지고 있다.',
+    choices: [
+      { text: '멀어지는 고향을 바라본다', result: '흥남의 불빛이 점점 작아졌다.',          mem: 'observe' },
+      { text: '가족을 확인한다',          result: '모두 함께 있었다. 그것으로 충분했다.', mem: 'family'  },
+      { text: '조용히 주변을 바라본다',   result: '파도 소리만이 울었다.',                mem: 'observe' }
+    ]
+  }
+];
+
+const TRANSITION_LINES = [
+  '사람들이 천천히 부두 쪽으로 움직이기 시작했다.',
+  '긴 행렬이 부두 앞까지 끝없이 이어졌다.',
+  '드디어 배가 눈앞에 모습을 드러냈다.',
+  '배가 천천히 흥남항을 벗어나기 시작했다.'
+];
+
+/* ═══════════════════════════════════════════
+   기억 시스템 — 화면 미표시
+═══════════════════════════════════════════ */
+const memory = { family: 0, help: 0, observe: 0 };
+
+/* 조합 기반 엔딩 문장 생성 */
+function getEndingText() {
+  const f = memory.family, h = memory.help, o = memory.observe;
+  if (h >= 2 && f >= 2) return '당신은 가족을 지키며 주변 사람도 외면하지 않았습니다.';
+  if (h >= 2 && o >= 2) return '당신은 혼란 속에서도 손을 내밀기를 멈추지 않았습니다.';
+  if (h >= 2)           return '혼란 속에서도 누군가의 손을 잡아 주었다.';
+  if (f >= 3)           return '당신은 끝까지 가족의 손을 놓지 않았다.';
+  if (o >= 3)           return '당신은 그날의 모습을 오래 기억하게 되었다.';
+  if (f >= 2 && o >= 2) return '가족과 함께 걸어가며 그날의 모든 것을 눈에 담았습니다.';
+  if (f > o && f > h)   return '당신은 끝까지 가족의 손을 놓지 않았다.';
+  if (h > f && h > o)   return '혼란 속에서도 누군가의 손을 잡아 주었다.';
+  if (o > f && o > h)   return '당신은 그날의 모습을 오래 기억하게 되었다.';
+  return '그날의 모든 기억이 당신 안에 남았습니다.';
+}
+
+/* 상태 */
+let currentScene      = 0;
+let choiceMade        = false;
+let selectedIdx       = -1;
+let autoAdvanceTimer  = null;
+let startScreenActive = true;
+
+/* DOM */
+const $ = id => document.getElementById(id);
+
+const elApp         = $('app');
+const elLDate       = $('l-date');
+const elLLocation   = $('l-location');
+const elLBg         = $('l-bg');
+const elCCounter    = $('c-counter');
+const elCHistNote   = $('c-hist-note');
+const elCTitle      = $('c-title');
+const elCStory      = $('c-story');
+const elDocStamp    = $('doc-stamp');
+const elCT          = [0,1,2].map(i => $(`ct${i}`));
+const elChoices     = document.querySelectorAll('.choice-item');
+const elResultLine  = $('result-line');
+const elInputHint   = $('input-hint');
+const elFade        = $('fade-overlay');
+const elTension     = $('tension-overlay');
+const elEnding      = $('ending-overlay');
+const elEMain       = $('e-main');
+const elERestart    = $('e-restart');
+const elSceneCvs    = $('scene-canvas');
+const sceneCtx      = elSceneCvs.getContext('2d');
+const elSceneBgImg  = $('scene-bg-img');
+const elTransText   = $('transition-text');
+
+/* ═══════════════════════════════════════════
+   배경 이미지 로드 — assets/images/sceneN.webp
+═══════════════════════════════════════════ */
+function loadSceneImage(idx) {
+  elSceneBgImg.style.opacity = '0';
+  elSceneBgImg.style.backgroundImage = 'none';
+  const img = new Image();
+  const path = `assets/images/scene${idx + 1}.png`;
+  img.onload  = () => { elSceneBgImg.style.backgroundImage = `url('${path}')`; elSceneBgImg.style.opacity = '1'; };
+  img.onerror = () => { elSceneBgImg.style.opacity = '0'; };
+  img.src = path;
+}
+
+/* ═══════════════════════════════════════════
+   UI 업데이트
+═══════════════════════════════════════════ */
+function updateUI() {
+  const s = SCENES[currentScene];
+  clearTimeout(autoAdvanceTimer);
+  autoAdvanceTimer = null;
+
+  elLDate.textContent     = s.date;
+  elLLocation.textContent = s.location;
+  elLBg.textContent       = s.background;
+  const elLHist = $('l-hist');
+  if (elLHist) elLHist.textContent = s.histFact;
+
+  elCCounter.textContent  = `SCENE  ${s.num} / 05`;
+  elCHistNote.textContent = s.histNote;
+  elCTitle.textContent    = s.title;
+  elCStory.textContent    = s.story;
+
+  // 기록물 도장 — 장면번호에 맞게
+  if (elDocStamp) {
+    elDocStamp.innerHTML = `1950.12<br>${s.location}<br>기록 제 0${currentScene + 1}호`;
+  }
+
+  s.choices.forEach((c, i) => { elCT[i].textContent = c.text; });
+
+  elChoices.forEach(el => el.classList.remove('selected', 'disabled'));
+  elResultLine.textContent = '';
+  elResultLine.classList.remove('visible');
+  if (elInputHint) elInputHint.style.opacity = '1';
+  choiceMade  = false;
+  selectedIdx = -1;
+
+  drawCurrentScene();
+}
+
+/* ═══════════════════════════════════════════
+   선택 처리
+   — 선택 순간: 긴장감 flash (2~3% 밝기 감소)
+   — 0.9초 후 자동 전환
+═══════════════════════════════════════════ */
+function makeChoice(idx) {
+  if (choiceMade) return;
+
+  /* 긴장감 연출 — 화면 2~3% 어두워졌다가 0.2초 후 복귀 */
+  elTension.classList.add('flash');
+  setTimeout(() => elTension.classList.remove('flash'), 200);
+  if (elInputHint) elInputHint.style.opacity = '0';
+
+  const choice = SCENES[currentScene].choices[idx];
+  memory[choice.mem]++;
+
+  selectedIdx = idx;
+  choiceMade  = true;
+
+  elChoices.forEach((el, i) => {
+    if (i === idx) { el.classList.add('selected'); el.classList.remove('disabled'); }
+    else           { el.classList.remove('selected'); el.classList.add('disabled'); }
+  });
+
+  elResultLine.textContent = choice.result;
+  elResultLine.classList.add('visible');
+
+  autoAdvanceTimer = setTimeout(nextScene, 800);
+}
+
+/* ═══════════════════════════════════════════
+   장면 전환
+═══════════════════════════════════════════ */
+function nextScene() {
+  if (!choiceMade) return;
+
+  if (currentScene >= SCENES.length - 1) {
+    showFinalMoment(); // 마지막 장면 특별 연출
+    return;
+  }
+
+  const transLine = TRANSITION_LINES[currentScene] || '';
+  elFade.classList.add('active');
+
+  setTimeout(() => {
+    elTransText.textContent = transLine;
+    elTransText.classList.add('visible');
+    setTimeout(() => {
+      elTransText.classList.remove('visible');
+      currentScene++;
+      updateUI();
+      setTimeout(() => elFade.classList.remove('active'), 80);
+    }, 2000);
+  }, 280);
+}
+
+/* ═══════════════════════════════════════════
+   마지막 장면 특별 연출
+   — 선택 후: 0.5초 어두워짐 → 문장1 → 문장2 → 엔딩
+═══════════════════════════════════════════ */
+function showFinalMoment() {
+  elFade.classList.add('active'); // 배경 어두워짐 — 유지하여 텍스트만 표시
+
+  setTimeout(() => {
+    elTransText.textContent = '당신은 마지막으로 뒤를 돌아보았습니다.';
+    elTransText.classList.add('visible');
+
+    setTimeout(() => {
+      elTransText.classList.remove('visible');
+      setTimeout(() => {
+        elTransText.textContent = '멀어지는 고향은 점점 보이지 않게 되었습니다.';
+        elTransText.classList.add('visible');
+        setTimeout(() => {
+          elTransText.classList.remove('visible');
+          setTimeout(showEnding, 420);
+        }, 1900);
+      }, 380);
+    }, 1900);
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════
+   엔딩
+═══════════════════════════════════════════ */
+const elEndingQr = $('ending-qr');
+
+function showEnding() {
+  stopDemo();
+  clearTimeout(autoAdvanceTimer);
+  elFade.classList.add('active');
+  setTimeout(() => {
+    elEMain.textContent = getEndingText(); // 조합 기반 엔딩 문장
+    elEnding.classList.add('visible');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      elEnding.classList.add('show');
+      // 엔딩 오버레이가 60% 불투명해진 후 페이드 제거 — 배경 씬 노출 방지
+      setTimeout(() => elFade.classList.remove('active'), 600);
+      setTimeout(() => $('e-line1').classList.add('show'), 500);
+      setTimeout(() => $('e-line2').classList.add('show'), 1200);
+      setTimeout(() => $('e-line3').classList.add('show'), 1900);
+      setTimeout(() => $('e-line4').classList.add('show'), 2700);
+      setTimeout(() => elEMain.classList.add('show'),      3500);
+      setTimeout(() => { elEndingQr.classList.add('show'); elERestart.classList.add('show'); }, 4400);
+    }));
+  }, 520);
+}
+
+function resetEnding() {
+  ['e-line1','e-line2','e-line3','e-line4'].forEach(id => $(id).classList.remove('show'));
+  elEMain.classList.remove('show');
+  elERestart.classList.remove('show');
+  elEndingQr.classList.remove('show');
+}
+
+function restart() {
+  clearTimeout(autoAdvanceTimer);
+  autoAdvanceTimer = null;
+  stopDemo();
+  elFade.classList.add('active');
+  setTimeout(() => {
+    elEnding.classList.remove('show');
+    elEnding.classList.remove('visible');
+    resetEnding();
+    memory.family = memory.help = memory.observe = 0;
+    currentScene = 0;
+    updateUI();
+    setTimeout(() => {
+      elFade.classList.remove('active');
+      showStartScreen();
+    }, 120);
+  }, 520);
+}
+
+function showStartScreen() {
+  startScreenActive = true;
+  const ss = $('start-screen');
+  ss.classList.add('visible');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ss.classList.add('show');
+  }));
+}
+
+function dismissStartScreen() {
+  if (!startScreenActive) return;
+  startScreenActive = false;
+  const ss = $('start-screen');
+  ss.classList.remove('show');
+  setTimeout(() => {
+    ss.classList.remove('visible');
+    showOpening();
+  }, 900);
+}
+
+/* ═══════════════════════════════════════════
+   장면 캔버스 — 이미지 없을 때 배경
+═══════════════════════════════════════════ */
+function sr(seed) {
+  const x = Math.sin(seed + 1) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function resizeSceneCanvas() {
+  elSceneCvs.width  = elSceneCvs.parentElement.clientWidth;
+  elSceneCvs.height = elSceneCvs.parentElement.clientHeight;
+}
+
+const painters = [
+  function(ctx, w, h) {
+    const sky = ctx.createLinearGradient(0,0,0,h*0.6);
+    sky.addColorStop(0,'#05101C'); sky.addColorStop(1,'#0E1D2E');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.6);
+    const gnd = ctx.createLinearGradient(0,h*0.56,0,h);
+    gnd.addColorStop(0,'#142030'); gnd.addColorStop(1,'#0B1620');
+    ctx.fillStyle=gnd; ctx.fillRect(0,h*0.56,w,h*0.44);
+    [0.25,0.45,0.65,0.82].forEach((xr,i) => {
+      const g=ctx.createRadialGradient(w*xr,h*0.38,0,w*xr,h*0.38,45);
+      g.addColorStop(0,`rgba(175,155,85,${i===1||i===2?'0.13':'0.08'})`);
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    });
+    ctx.fillStyle='#060F1A'; ctx.fillRect(0,h*0.63,w,h*0.1);
+    for(let i=0;i<18;i++){
+      const px=sr(i*7.3)*w*0.96+w*0.02; const ph=h*0.07+sr(i*3.1)*h*0.04;
+      ctx.fillStyle='#040C16'; ctx.fillRect(px,h*0.63-ph,5,ph);
+    }
+    for(let i=0;i<48;i++){
+      const px=(w/48)*i+(sr(i*5.7)-0.5)*16; const ph=h*0.07+sr(i*8.1)*h*0.025;
+      ctx.fillStyle='#050B15';
+      ctx.fillRect(px-4,h*0.7-ph,8,ph+h*0.04);
+      ctx.beginPath(); ctx.arc(px,h*0.7-ph-5,5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='rgba(210,218,232,0.52)';
+    for(let i=0;i<160;i++){
+      ctx.beginPath(); ctx.arc(sr(i*173.1)*w,sr(i*931.7)*h*0.78,sr(i*47.3)*1.3+0.4,0,Math.PI*2); ctx.fill();
+    }
+  },
+  function(ctx, w, h) {
+    const sky=ctx.createLinearGradient(0,0,0,h*0.5);
+    sky.addColorStop(0,'#07101C'); sky.addColorStop(1,'#162030');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.5);
+    const gnd=ctx.createLinearGradient(0,h*0.48,0,h);
+    gnd.addColorStop(0,'#182638'); gnd.addColorStop(1,'#101C2C');
+    ctx.fillStyle=gnd; ctx.fillRect(0,h*0.48,w,h*0.52);
+    const vx=w/2, vy=h*0.46;
+    ctx.strokeStyle='rgba(100,115,135,0.1)'; ctx.lineWidth=1;
+    for(let i=-6;i<=6;i++){ ctx.beginPath(); ctx.moveTo(vx+i*5,vy); ctx.lineTo(vx+i*220,h); ctx.stroke(); }
+    const mist=ctx.createRadialGradient(w/2,vy,0,w/2,vy,w*0.4);
+    mist.addColorStop(0,'rgba(30,45,65,0.3)'); mist.addColorStop(1,'transparent');
+    ctx.fillStyle=mist; ctx.fillRect(0,0,w,h);
+    for(let i=0;i<35;i++){
+      const t=sr(i*13.7); const py=vy+t*(h-vy)*0.96; const sc=0.07+t*0.93;
+      const px=vx+(sr(i*7.3)-0.5)*sc*w*0.75; const ph=h*0.11*sc;
+      ctx.fillStyle=`rgba(5,10,18,${0.5+t*0.5})`;
+      ctx.fillRect(px-3.5*sc,py-ph,7*sc,ph);
+      ctx.beginPath(); ctx.arc(px,py-ph-4*sc,4*sc,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='rgba(206,214,228,0.46)';
+    for(let i=0;i<130;i++){ ctx.beginPath(); ctx.arc(sr(i*511.7)*w,sr(i*973.1)*h,sr(i*31)*0.8+0.4,0,Math.PI*2); ctx.fill(); }
+  },
+  function(ctx, w, h) {
+    const sky=ctx.createLinearGradient(0,0,0,h*0.48);
+    sky.addColorStop(0,'#07101A'); sky.addColorStop(1,'#111C2A');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.48);
+    ctx.fillStyle='#0B1622'; ctx.fillRect(0,h*0.4,w,h*0.12);
+    ctx.fillStyle='#04090F';
+    ctx.fillRect(w*0.5,h*0.32,w*0.3,h*0.07); ctx.fillRect(w*0.63,h*0.18,3,h*0.15); ctx.fillRect(w*0.71,h*0.22,2,h*0.11);
+    const sl=ctx.createRadialGradient(w*0.64,h*0.33,0,w*0.64,h*0.33,55);
+    sl.addColorStop(0,'rgba(175,155,85,0.14)'); sl.addColorStop(1,'transparent');
+    ctx.fillStyle=sl; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#090E1C'; ctx.fillRect(0,h*0.5,w,h*0.5);
+    for(let row=0;row<6;row++){
+      const ry=h*0.55+row*(h*0.065); const cnt=20+row*7;
+      for(let j=0;j<cnt;j++){
+        const px=(w/cnt)*j+(sr(row*40+j)-0.5)*10; const ph=h*0.05+sr(row*31+j*7)*h*0.015;
+        ctx.fillStyle=`rgba(4,8,14,${0.7+sr(row*11+j*3)*0.3})`;
+        ctx.fillRect(px-4,ry-ph,8,ph); ctx.beginPath(); ctx.arc(px,ry-ph-4,4.5,0,Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.fillStyle='rgba(200,210,224,0.4)';
+    for(let i=0;i<100;i++){ ctx.beginPath(); ctx.arc(sr(i*267.4)*w,sr(i*847.9)*h*0.5,sr(i*19)*0.75+0.35,0,Math.PI*2); ctx.fill(); }
+  },
+  function(ctx, w, h) {
+    const sky=ctx.createLinearGradient(0,0,0,h*0.55);
+    sky.addColorStop(0,'#060C16'); sky.addColorStop(0.6,'#101A28'); sky.addColorStop(1,'#162030');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.55);
+    ctx.fillStyle='#0B1624'; ctx.fillRect(0,h*0.48,w,h*0.52);
+    ctx.fillStyle='#03070D';
+    ctx.beginPath(); ctx.moveTo(w*0.32,h*0.5); ctx.lineTo(w*0.97,h*0.5); ctx.lineTo(w*0.99,h*0.65); ctx.lineTo(w*0.26,h*0.65); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#05090F'; ctx.fillRect(w*0.55,h*0.26,w*0.32,h*0.25);
+    for(let i=0;i<7;i++){
+      const px=w*0.57+i*w*0.045;
+      const pg=ctx.createRadialGradient(px,h*0.38,0,px,h*0.38,8);
+      pg.addColorStop(0,'rgba(195,170,90,0.3)'); pg.addColorStop(1,'transparent');
+      ctx.fillStyle=pg; ctx.fillRect(0,0,w,h);
+    }
+    const sg=ctx.createRadialGradient(w*0.65,h*0.48,0,w*0.65,h*0.48,w*0.3);
+    sg.addColorStop(0,'rgba(165,145,75,0.07)'); sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(70,80,100,0.6)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(w*0.32,h*0.5); ctx.lineTo(w*0.04,h*0.76); ctx.stroke();
+    for(let i=0;i<16;i++){
+      const t=i/16; const px=w*0.32-t*(w*0.28); const py=h*0.5+t*(h*0.26); const sc=0.4+t*0.6; const ph=h*0.065*sc;
+      ctx.fillStyle='rgba(3,6,10,0.92)'; ctx.fillRect(px-3.5*sc,py-ph,6*sc,ph); ctx.beginPath(); ctx.arc(px,py-ph-3.5*sc,3.5*sc,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='#070F1A'; ctx.fillRect(0,h*0.6,w*0.32,h*0.4);
+    for(let i=0;i<42;i++){
+      const px=(w*0.32/42)*i+(sr(i*9.1)-0.5)*7; const ph=h*0.055+sr(i*6.3)*h*0.02;
+      ctx.fillStyle='rgba(3,6,12,0.95)'; ctx.fillRect(px-3.5,h*0.6-ph,7,ph+h*0.05); ctx.beginPath(); ctx.arc(px,h*0.6-ph-4,4,0,Math.PI*2); ctx.fill();
+    }
+  },
+  function(ctx, w, h) {
+    const sky=ctx.createLinearGradient(0,0,0,h*0.52);
+    sky.addColorStop(0,'#050810'); sky.addColorStop(0.55,'#0C1620'); sky.addColorStop(1,'#14202E');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.52);
+    const dawn=ctx.createLinearGradient(0,h*0.4,0,h*0.54);
+    dawn.addColorStop(0,'rgba(120,95,50,0.09)'); dawn.addColorStop(1,'transparent');
+    ctx.fillStyle=dawn; ctx.fillRect(0,h*0.4,w,h*0.14);
+    const sea=ctx.createLinearGradient(0,h*0.48,0,h);
+    sea.addColorStop(0,'#10202E'); sea.addColorStop(1,'#09141E');
+    ctx.fillStyle=sea; ctx.fillRect(0,h*0.48,w,h*0.52);
+    ctx.strokeStyle='rgba(130,150,175,0.05)'; ctx.lineWidth=1;
+    for(let i=0;i<10;i++){
+      const wy=h*0.53+i*(h*0.05); ctx.beginPath(); ctx.moveTo(0,wy);
+      for(let x=0;x<=w;x+=24){ ctx.lineTo(x,wy+Math.sin(x*0.017+i*1.1)*2.5); }
+      ctx.stroke();
+    }
+    const sx=w*0.4, sy=h*0.36;
+    ctx.fillStyle='#030810';
+    ctx.fillRect(sx-100,sy,200,h*0.068); ctx.fillRect(sx-50,sy-h*0.1,80,h*0.1);
+    ctx.fillRect(sx+22,sy-h*0.078,4,h*0.078); ctx.fillRect(sx-32,sy-h*0.062,3,h*0.062);
+    ctx.fillStyle='rgba(192,202,218,0.46)';
+    for(let i=0;i<75;i++){
+      const sr2=sr(i*17.3)*0.55+0.35; ctx.beginPath(); ctx.arc(sr(i*437.1)*w,sr(i*923.7)*h*0.4,sr2,0,Math.PI*2); ctx.fill();
+    }
+    const ref=ctx.createLinearGradient(sx-50,h*0.48,sx+50,h*0.48);
+    ref.addColorStop(0,'transparent'); ref.addColorStop(0.5,'rgba(145,125,75,0.05)'); ref.addColorStop(1,'transparent');
+    ctx.fillStyle=ref; ctx.fillRect(sx-80,h*0.48,160,h*0.25);
+  }
+];
+
+function drawCurrentScene() {
+  resizeSceneCanvas();
+  painters[currentScene](sceneCtx, elSceneCvs.width, elSceneCvs.height);
+  loadSceneImage(currentScene);
+}
+
+/* ═══════════════════════════════════════════
+   오프닝
+═══════════════════════════════════════════ */
+function showHint() {
+  const hv = $('hint-overlay');
+  hv.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    hv.classList.add('show');
+    setTimeout(() => { hv.classList.remove('show'); setTimeout(() => { hv.style.display = 'none'; }, 650); }, 2200);
+  }));
+}
+
+function showOpening() {
+  const ov = $('opening-overlay');
+  ov.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    ov.classList.add('show');
+    setTimeout(() => {
+      ov.classList.remove('show');
+      setTimeout(() => {
+        ov.style.display = 'none';
+        elApp.classList.add('ready');
+        showHint();
+        resetDemoTimer();
+      }, 900);
+    }, 3500);
+  }));
+}
+
+/* ═══════════════════════════════════════════
+   눈 입자 + 장면별 눈 축적 효과
+═══════════════════════════════════════════ */
+function initSnow() {
+  const canvas = $('snow-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+  resize();
+
+  const flakes = Array.from({length: 28}, () => ({
+    x:       Math.random() * 1280,
+    y:       Math.random() * 160,
+    r:       Math.random() * 0.85 + 0.28,
+    speed:   Math.random() * 0.20 + 0.06,
+    drift:   (Math.random() - 0.5) * 0.12,
+    opacity: Math.random() * 0.28 + 0.07
+  }));
+
+  const figures = [
+    { x: 80,   y: 102, h: 9,  speed: 0.16, opacity: 0.40 },
+    { x: 260,  y: 96,  h: 11, speed: 0.20, opacity: 0.36 },
+    { x: 480,  y: 104, h: 8,  speed: 0.13, opacity: 0.43 },
+    { x: 680,  y: 99,  h: 10, speed: 0.18, opacity: 0.38 },
+    { x: 900,  y: 101, h: 12, speed: 0.22, opacity: 0.34 },
+    { x: 1120, y: 97,  h: 9,  speed: 0.15, opacity: 0.41 }
+  ];
+
+  /* 장면별 눈 축적 — 장면 0: 약 3px, 장면 4: 약 12px */
+  function drawSnowAccum(w, h, sceneIdx) {
+    const baseH  = 2.5 + sceneIdx * 1.9;
+    const alphaA = 0.12 + sceneIdx * 0.012;
+    const alphaB = 0.05 + sceneIdx * 0.008;
+
+    // 1층: 불규칙 쌓임
+    ctx.fillStyle = `rgba(210,220,235,${alphaA})`;
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let x = 0; x <= w; x += 6) {
+      const noise = Math.sin(x * 0.06 + 1.2) * 1.2 + Math.sin(x * 0.11 + 0.5) * 0.7;
+      ctx.lineTo(x, h - baseH + noise);
+    }
+    ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+
+    // 2층: 상단 반짝임 (장면 2 이후)
+    if (sceneIdx >= 2) {
+      ctx.fillStyle = `rgba(225,232,245,${alphaB})`;
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 10) {
+        const noise = Math.sin(x * 0.04 + 2.1) * 0.8 + 0.4;
+        ctx.lineTo(x, h - baseH - 1.2 + noise);
+      }
+      ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  (function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 눈 쌓임 (하단)
+    drawSnowAccum(canvas.width, canvas.height, currentScene);
+
+    // 눈 입자
+    flakes.forEach(f => {
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(198,208,224,${f.opacity})`; ctx.fill();
+      f.y += f.speed; f.x += f.drift;
+      if (f.y > canvas.height) { f.y = -2; f.x = Math.random() * canvas.width; }
+      if (f.x > canvas.width)  f.x = 0;
+      if (f.x < 0)             f.x = canvas.width;
+    });
+
+    // 이동 실루엣
+    figures.forEach(f => {
+      const fw = f.h * 0.48;
+      ctx.fillStyle = `rgba(3,7,16,${f.opacity})`;
+      ctx.fillRect(f.x - fw / 2, f.y - f.h, fw, f.h);
+      ctx.beginPath(); ctx.arc(f.x, f.y - f.h - f.h * 0.36, f.h * 0.36, 0, Math.PI * 2); ctx.fill();
+      f.x -= f.speed;
+      if (f.x < -20) f.x = canvas.width + 25;
+    });
+
+    requestAnimationFrame(draw);
+  })();
+}
+
+/* ═══════════════════════════════════════════
+   자동 데모 모드 — 30초 무입력
+═══════════════════════════════════════════ */
+let demoMode    = false;
+let demoTimer   = null;
+let demoTimeout = null;
+const elDemoInd = $('demo-indicator');
+
+function resetDemoTimer() {
+  if (demoMode) { stopDemo(); return; }
+  clearTimeout(demoTimeout);
+  demoTimeout = setTimeout(startDemo, 30000);
+}
+function startDemo() {
+  if (startScreenActive) return;
+  if (elEnding.classList.contains('visible')) return;
+  demoMode = true; elDemoInd.classList.add('show'); runDemo();
+}
+function stopDemo() {
+  demoMode = false; clearTimeout(demoTimer); elDemoInd.classList.remove('show');
+  clearTimeout(demoTimeout); demoTimeout = setTimeout(startDemo, 30000);
+}
+function runDemo() {
+  if (!demoMode) return;
+  if (elEnding.classList.contains('visible')) {
+    demoTimer = setTimeout(() => { if (demoMode) restart(); }, 5500); return;
+  }
+  if (!choiceMade) {
+    makeChoice(Math.floor(Math.random() * 3));
+    // 0.9s(auto) + 최대 4s(final moment or nextScene transition) + buffer
+    demoTimer = setTimeout(() => { if (demoMode) runDemo(); }, 3400);
+  } else {
+    demoTimer = setTimeout(() => { if (demoMode) runDemo(); }, 600);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   필름 그레인
+═══════════════════════════════════════════ */
+function initGrain() {
+  const canvas = $('grain'); const ctx2 = canvas.getContext('2d');
+  canvas.width = 1280; canvas.height = 160;
+  let tick = 0;
+  (function animate() {
+    tick++;
+    if (tick % 3 === 0) {
+      const img = ctx2.createImageData(1280, 160); const d = img.data;
+      for (let i = 0; i < d.length; i += 4) { const v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255; }
+      ctx2.putImageData(img, 0, 0);
+    }
+    requestAnimationFrame(animate);
+  })();
+}
+
+/* ═══════════════════════════════════════════
+   QR 코드
+═══════════════════════════════════════════ */
+function initQR() {
+  const url = window.location.href;
+  try {
+    new QRCode(document.getElementById('qr-code'), { text: url, width: 90, height: 90, colorDark: '#C8C2B4', colorLight: '#04060B', correctLevel: QRCode.CorrectLevel.M });
+  } catch(e) {
+    const el = document.getElementById('qr-code');
+    el.style.cssText = 'font-size:8px;color:var(--text-2);width:90px;word-break:break-all;';
+    el.textContent = url;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   이벤트
+═══════════════════════════════════════════ */
+elChoices.forEach((el, i) => {
+  el.addEventListener('click', () => { resetDemoTimer(); makeChoice(i); });
+});
+
+$('start-screen').addEventListener('click', () => dismissStartScreen());
+
+elERestart.addEventListener('click', restart);
+
+document.addEventListener('keydown', e => {
+  if (startScreenActive) { dismissStartScreen(); return; }
+  switch(e.key) {
+    case '1': resetDemoTimer(); makeChoice(0); break;
+    case '2': resetDemoTimer(); makeChoice(1); break;
+    case '3': resetDemoTimer(); makeChoice(2); break;
+    case 'r': case 'R':
+      resetDemoTimer(); restart(); break;
+  }
+});
+
+window.addEventListener('resize', drawCurrentScene);
+
+/* ═══════════════════════════════════════════
+   초기화
+═══════════════════════════════════════════ */
+function init() {
+  initGrain(); initSnow(); initQR();
+  requestAnimationFrame(() => { updateUI(); showStartScreen(); });
+}
+
+init();
+</script>
+</body>
+</html>
