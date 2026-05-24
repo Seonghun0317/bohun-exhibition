@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko" style="background:#04050A">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>흥남철수 — 체험</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Bebas+Neue&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #04050A;
+  --gold:     #B49048;
+  --text:     #D2CCB8;
+  --text-dim: rgba(210,204,184,0.52);
+  --border:   rgba(150,140,120,0.11);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; background: var(--bg); }
+body {
+  display: flex; flex-direction: column;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Serif KR', serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  opacity: 0;
+}
+body.loaded { opacity: 1; transition: opacity 0.5s ease; }
+
+/* ── 필름 그레인 ── */
+#grain {
+  position: fixed; inset: 0; z-index: 200;
+  pointer-events: none; opacity: 0.034;
+}
+
+/* ── 비네트 ── */
+#vignette {
+  position: fixed; inset: 0; z-index: 4; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 38%, transparent 28%, rgba(2,3,8,0.78) 100%);
+}
+
+/* ── 황금 상단 선 ── */
+#top-rule {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 300;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(180,144,72,0.4) 8%,
+    rgba(180,144,72,0.95) 28%, rgba(180,144,72,0.95) 72%,
+    rgba(180,144,72,0.4) 92%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ── 배경 씬 이미지 ── */
+#scene-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background-size: cover; background-position: center;
+  filter: brightness(0.22) saturate(0.55);
+  opacity: 0; transition: opacity 1.1s ease;
+  pointer-events: none;
+}
+
+/* ── 헤더 ── */
+#header {
+  height: 46px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 10;
+  background: rgba(4,5,10,0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  margin-top: 2px;
+}
+.hdr-main {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px; letter-spacing: 6px;
+  color: var(--text); line-height: 1;
+}
+.hdr-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 3px;
+  color: var(--gold); opacity: 0.55;
+}
+
+/* ── 진행 바 ── */
+#progress-bar {
+  height: 1px; flex-shrink: 0;
+  background: rgba(100,95,85,0.07);
+  position: relative; z-index: 10;
+}
+#progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), rgba(180,144,72,0.4));
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 20%;
+  box-shadow: 0 0 8px rgba(180,144,72,0.3);
+}
+
+/* ── 씬 도트 바 ── */
+#scene-dots-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 9px; padding: 6px 0 4px;
+  position: relative; z-index: 10; flex-shrink: 0;
+}
+.sdot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: rgba(120,115,105,0.16);
+  transition: background 0.4s, transform 0.32s, box-shadow 0.32s;
+}
+.sdot.active {
+  background: var(--gold); transform: scale(1.7);
+  box-shadow: 0 0 8px rgba(180,144,72,0.65);
+}
+.sdot.done { background: rgba(180,144,72,0.32); }
+
+/* ── 메인 래퍼 ── */
+#main {
+  flex: 1; display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+  position: relative; z-index: 5;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── 씬 페이드 ── */
+#scene-info, #choices-area, #result-area, #choices-label {
+  transition: opacity 0.22s ease;
+}
+#main.fading #scene-info,
+#main.fading #choices-area,
+#main.fading #result-area,
+#main.fading #choices-label { opacity: 0; }
+
+/* ── 장면 정보 ── */
+#scene-info {
+  flex: 1; min-height: 0;
+  padding: 16px 22px 14px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(110,105,95,0.09);
+}
+#scene-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+#scene-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 5px;
+  color: var(--gold); opacity: 0.5;
+}
+#scene-year {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 2.5px;
+  color: rgba(180,144,72,0.27);
+}
+
+.title-accent {
+  display: block; width: 22px; height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin-bottom: 9px; opacity: 0.6;
+}
+#scene-title {
+  font-size: clamp(21px, 5.9vw, 27px);
+  font-weight: 700; letter-spacing: 0.3px;
+  line-height: 1.15; margin-bottom: 10px;
+  text-shadow: 0 2px 30px rgba(0,0,0,1), 0 0 60px rgba(0,0,0,0.95);
+}
+#scene-story {
+  font-size: clamp(13px, 3.7vw, 14px);
+  font-weight: 300; color: rgba(210,204,184,0.78);
+  line-height: 1.92; word-break: keep-all;
+  text-shadow: 0 1px 18px rgba(0,0,0,0.99);
+}
+
+/* ── 선택 레이블 ── */
+#choices-label {
+  padding: 9px 22px 5px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 5.5px;
+  color: rgba(180,144,72,0.35);
+  flex-shrink: 0;
+}
+
+/* ── 선택 버튼 ── */
+#choices-area {
+  flex: 0 0 auto;
+  padding: 0 14px 8px; gap: 6px;
+  display: flex; flex-direction: column;
+}
+.ctrl-btn {
+  width: 100%; min-height: 52px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 16px;
+  border: 1px solid rgba(110,105,95,0.13);
+  border-radius: 3px;
+  background: rgba(4,5,10,0.84);
+  cursor: pointer; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left; position: relative; overflow: hidden;
+  transition: background 0.13s, border-color 0.13s, opacity 0.28s, transform 0.1s;
+}
+.ctrl-btn::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: rgba(180,144,72,0.17);
+  transition: background 0.16s, width 0.13s;
+  border-radius: 3px 0 0 3px;
+}
+.ctrl-btn:active:not(.selected):not(.disabled) {
+  background: rgba(180,144,72,0.06);
+  border-color: rgba(180,144,72,0.24);
+  transform: scale(0.989);
+}
+.ctrl-btn.selected {
+  background: rgba(180,144,72,0.09);
+  border-color: rgba(180,144,72,0.35);
+}
+.ctrl-btn.selected::before { background: var(--gold); width: 4px; }
+.ctrl-btn.disabled { opacity: 0.08; pointer-events: none; }
+
+.btn-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9.5px; color: rgba(180,144,72,0.36);
+  flex-shrink: 0; width: 18px; line-height: 1;
+  transition: color 0.16s;
+}
+.ctrl-btn.selected .btn-num { color: var(--gold); opacity: 1; }
+.btn-text {
+  font-size: clamp(13.5px, 4vw, 14.5px);
+  font-weight: 600; line-height: 1.3; color: var(--text);
+}
+
+/* ── 결과 영역 ── */
+#result-area {
+  padding: 0 22px; border-top: 1px solid transparent;
+  max-height: 0; overflow: hidden; flex-shrink: 0;
+  transition: max-height 0.42s ease, padding 0.32s ease, border-color 0.3s;
+}
+#result-area.show {
+  padding: 9px 22px 11px; max-height: 80px;
+  border-top-color: rgba(110,105,95,0.09);
+}
+#result-inner { display: flex; align-items: flex-start; gap: 12px; }
+#result-dash {
+  font-size: 13px; color: var(--gold); opacity: 0.5;
+  flex-shrink: 0; margin-top: 3px; line-height: 1;
+}
+#result-text {
+  font-size: clamp(12px, 3.5vw, 13px);
+  font-style: italic; color: rgba(210,204,184,0.62);
+  opacity: 0; transition: opacity 0.55s ease 0.12s;
+  line-height: 1.74; word-break: keep-all;
+}
+#result-text.show { opacity: 1; }
+
+/* ── 장면 번호 ── */
+#scene-progress {
+  position: fixed;
+  bottom: max(13px, env(safe-area-inset-bottom, 13px));
+  right: 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 2.5px;
+  color: rgba(130,125,115,0.15);
+  pointer-events: none; z-index: 15;
+  transition: opacity 0.4s;
+}
+#scene-progress.hidden { opacity: 0; }
+
+/* ══════════════════════════
+   엔딩 화면
+══════════════════════════ */
+#end-screen {
+  position: fixed; inset: 0; z-index: 50;
+  display: none; flex-direction: column;
+  background: linear-gradient(162deg, #02030A 0%, #040610 100%);
+  overflow: hidden;
+}
+#end-screen.active { display: flex; }
+
+/* 환경광 글로우 */
+#end-screen::before {
+  content: '';
+  position: absolute; top: -20%; left: 20%; right: 10%; bottom: 30%;
+  background: radial-gradient(ellipse, rgba(180,144,72,0.032) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+#end-scroll {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: max(40px, env(safe-area-inset-top, 40px)) 28px
+           max(48px, env(safe-area-inset-bottom, 48px));
+  display: flex; flex-direction: column;
+  align-items: center;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 엔딩 상단 태그 */
+.end-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 7px;
+  color: rgba(180,144,72,0.35); text-align: center;
+  margin-bottom: 24px;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.end-tag.reveal { opacity: 1; transform: translateY(0); }
+
+.end-line {
+  font-size: clamp(13px, 3.8vw, 14px);
+  font-weight: 300; color: rgba(210,204,184,0.56);
+  line-height: 2.1; word-break: keep-all; text-align: center;
+  width: 100%; max-width: 310px;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  margin-bottom: 0;
+}
+.end-line.reveal { opacity: 1; transform: translateY(0); }
+
+.end-divider {
+  width: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(180,144,72,0.55), transparent);
+  margin: 20px auto;
+  transition: width 1.0s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.end-divider.reveal { width: 64px; }
+
+#end-main {
+  font-size: clamp(16px, 5.2vw, 20px);
+  font-weight: 700; color: var(--text);
+  line-height: 1.5; letter-spacing: 0.3px; text-align: center;
+  max-width: 310px;
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+  text-shadow: 0 0 55px rgba(180,144,72,0.18);
+}
+#end-main.reveal { opacity: 1; transform: translateY(0); }
+
+.end-sub {
+  font-size: 11px; font-style: italic;
+  color: rgba(180,144,72,0.55); text-align: center;
+  margin-top: 10px; max-width: 300px;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.end-sub.reveal { opacity: 1; transform: translateY(0); }
+
+/* 내 선택 기록 */
+#choice-history {
+  width: 100%; max-width: 320px; margin-top: 28px;
+  border: 1px solid rgba(180,144,72,0.1); border-radius: 3px;
+  overflow: hidden;
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+#choice-history.reveal { opacity: 1; transform: translateY(0); }
+
+#choice-history-label {
+  padding: 9px 14px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 7.5px; letter-spacing: 5px;
+  color: rgba(180,144,72,0.35);
+  border-bottom: 1px solid rgba(180,144,72,0.08);
+  background: rgba(180,144,72,0.025);
+}
+.hi-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid rgba(140,130,115,0.07);
+  opacity: 0; transform: translateX(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.hi-item:last-child { border-bottom: none; }
+.hi-item.reveal { opacity: 1; transform: translateX(0); }
+.hi-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; color: rgba(180,144,72,0.33);
+  flex-shrink: 0; width: 16px;
+}
+.hi-text {
+  font-size: 12.5px; font-weight: 400;
+  color: rgba(210,204,184,0.65); line-height: 1.4;
+}
+
+#restart-btn {
+  margin-top: 32px; padding: 14px 44px; min-height: 50px;
+  border: 1px solid rgba(180,144,72,0.22); border-radius: 3px;
+  background: transparent;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px; letter-spacing: 8px; color: rgba(180,144,72,0.68);
+  cursor: pointer; touch-action: manipulation;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 0.65s ease, transform 0.65s ease,
+              background 0.15s, border-color 0.15s, color 0.15s;
+}
+#restart-btn.reveal { opacity: 1; transform: translateY(0); }
+#restart-btn:active { background: rgba(180,144,72,0.09); border-color: rgba(180,144,72,0.42); color: var(--gold); }
+#restart-btn:disabled { opacity: 0.25 !important; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<!-- ── 전역 오버레이 ── -->
+<div id="top-rule"></div>
+<canvas id="grain"></canvas>
+<div id="vignette"></div>
+<div id="scene-bg"></div>
+
+<!-- ── 헤더 ── -->
+<div id="header">
+  <div class="hdr-main">흥남철수</div>
+  <div class="hdr-sub">1950 · DEC · INTERACTIVE</div>
+</div>
+
+<!-- ── 진행 바 ── -->
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- ── 씬 도트 ── -->
+<div id="scene-dots-bar">
+  <div class="sdot active" data-dot="0"></div>
+  <div class="sdot" data-dot="1"></div>
+  <div class="sdot" data-dot="2"></div>
+  <div class="sdot" data-dot="3"></div>
+  <div class="sdot" data-dot="4"></div>
+</div>
+
+<!-- ── 메인 ── -->
+<div id="main">
+  <div id="scene-info">
+    <div id="scene-meta">
+      <div id="scene-num">SCENE 01</div>
+      <div id="scene-year">1950.12</div>
+    </div>
+    <span class="title-accent"></span>
+    <div id="scene-title"></div>
+    <div id="scene-story"></div>
+  </div>
+
+  <div id="choices-label">지금 당신이라면</div>
+
+  <div id="choices-area">
+    <button class="ctrl-btn" data-idx="0">
+      <span class="btn-num">01</span>
+      <span class="btn-text" id="c0"></span>
+    </button>
+    <button class="ctrl-btn" data-idx="1">
+      <span class="btn-num">02</span>
+      <span class="btn-text" id="c1"></span>
+    </button>
+    <button class="ctrl-btn" data-idx="2">
+      <span class="btn-num">03</span>
+      <span class="btn-text" id="c2"></span>
+    </button>
+  </div>
+
+  <div id="result-area">
+    <div id="result-inner">
+      <div id="result-dash">—</div>
+      <div id="result-text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 장면 번호 ── -->
+<div id="scene-progress" class="hidden">1 / 5</div>
+
+<!-- ── 엔딩 화면 ── -->
+<div id="end-screen">
+  <div id="end-scroll">
+    <div class="end-tag">1950 · 흥남철수 작전</div>
+    <div class="end-line">1950년 12월 24일,<br>마지막 배가 흥남을 떠났습니다.</div>
+    <div class="end-line">살아서 남쪽 땅을 밟은 사람 — 105,000명.</div>
+    <div class="end-line">그 중 고향으로 돌아온 사람은 없었습니다.</div>
+    <div class="end-divider"></div>
+    <div id="end-main"></div>
+    <div class="end-sub">흥남철수는 그렇게 역사가 되었습니다.</div>
+    <div id="choice-history">
+      <div id="choice-history-label">나의 선택 기록</div>
+    </div>
+    <button id="restart-btn">다시 체험하기</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   완전 독립형 체험 — 서버·LED 불필요
+══════════════════════════════════════════ */
+const SCENES = [
+  {
+    num: '01', title: '얼어붙은 흥남',
+    year: '1950.12.14',
+    story: '전쟁이 밀려왔다. 당신은 가족을 데리고 흥남항까지 걸어왔다. 배를 타지 못하면 이 자리에 남겨진다.',
+    choices: [
+      { text: '가족을 찾는다',             result: '서로의 얼굴을 확인했다. 모두 살아있었다.',    mem: 'family'  },
+      { text: '옆에 선 사람에게 말을 건다', result: '낯선 이들과 눈빛이 마주쳤다.',              mem: 'observe' },
+      { text: '들고 온 짐을 내려놓는다',    result: '이것이 우리가 가진 전부였다.',               mem: 'observe' }
+    ]
+  },
+  {
+    num: '02', title: '부두로 가는 길',
+    year: '1950.12.15',
+    story: '발이 감각을 잃어가고 있었다. 행렬은 끝이 보이지 않았다. 배에 탈 수 있을지, 아무도 알려주지 않았다.',
+    choices: [
+      { text: '가족 손을 꼭 잡는다', result: '차가운 손이었지만 꼭 잡았다.',          mem: 'family'  },
+      { text: '주변을 살핀다',       result: '쓰러진 사람들과 버려진 짐들이 보였다.', mem: 'observe' },
+      { text: '짐을 다시 챙긴다',    result: '그것이 우리 삶의 전부였다.',             mem: 'family'  }
+    ]
+  },
+  {
+    num: '03', title: '끝없는 줄',
+    year: '1950.12.17',
+    story: '부두를 가득 메운 사람들 사이로 미군이 분주히 움직였다. 저 불빛이 배라면 — 과연 얼마나 탈 수 있을까.',
+    choices: [
+      { text: '그 자리에서 기다린다',      result: '자리를 지키는 것만으로도 힘이 들었다.',                   mem: 'observe' },
+      { text: '아이를 도와준다',           result: '그 아이의 눈이 조용히 당신을 바라봤다.',                  mem: 'help'    },
+      { text: '군인들의 말을 들으려 한다', result: '그들의 말은 알아들을 수 없었다. 배는 그 자리에 있었다.', mem: 'observe' }
+    ]
+  },
+  {
+    num: '04', title: '마지막 승선',
+    year: '1950.12.23',
+    story: '드디어 당신 차례가 왔다. 갑판에 올라서자 발 디딜 틈이 없었다. 뒤를 돌아보니 부두는 아직 사람들로 가득했다.',
+    choices: [
+      { text: '가족과 함께 이동한다', result: '배 위에 섰다는 것이 실감나지 않았다.',           mem: 'family'  },
+      { text: '주변 사람을 돕는다',   result: '손을 내밀었다. 그것이 사람이 할 수 있는 일이었다.', mem: 'help'  },
+      { text: '뒤를 돌아본다',        result: '아직 남은 사람들이 눈에 밟혔다.',                mem: 'observe' }
+    ]
+  },
+  {
+    num: '05', title: '남쪽으로 향하는 배',
+    year: '1950.12.24',
+    story: '배가 천천히 흥남항을 떠난다. 차가운 바닷바람이 불어온다. 고향이 점점 멀어지고 있다.',
+    choices: [
+      { text: '멀어지는 고향을 바라본다', result: '흥남의 불빛이 점점 작아졌다.',          mem: 'observe' },
+      { text: '가족을 확인한다',          result: '모두 함께 있었다. 그것으로 충분했다.', mem: 'family'  },
+      { text: '조용히 주변을 바라본다',   result: '파도 소리만이 울었다.',                mem: 'observe' }
+    ]
+  }
+];
+
+/* ── 엔딩 문장 ── */
+function getEndingText(mem) {
+  const f = mem.family, h = mem.help, o = mem.observe;
+  if (h >= 2 && f >= 2) return '당신은 가족을 지키며 주변 사람도 외면하지 않았습니다.';
+  if (h >= 2 && o >= 2) return '당신은 혼란 속에서도 손을 내밀기를 멈추지 않았습니다.';
+  if (h >= 2)           return '혼란 속에서도 누군가의 손을 잡아 주었다.';
+  if (f >= 3)           return '당신은 끝까지 가족의 손을 놓지 않았다.';
+  if (o >= 3)           return '당신은 그날의 모습을 오래 기억하게 되었다.';
+  if (f >= 2 && o >= 2) return '가족과 함께 걸어가며 그날의 모든 것을 눈에 담았습니다.';
+  if (f > o && f > h)   return '당신은 끝까지 가족의 손을 놓지 않았다.';
+  if (h > f && h > o)   return '혼란 속에서도 누군가의 손을 잡아 주었다.';
+  if (o > f && o > h)   return '당신은 그날의 모습을 오래 기억하게 되었다.';
+  return '그날의 모든 기억이 당신 안에 남았습니다.';
+}
+
+/* ── DOM ── */
+const progressFill  = document.getElementById('progress-fill');
+const sceneDots     = Array.from(document.querySelectorAll('.sdot'));
+const sceneNum      = document.getElementById('scene-num');
+const sceneYear     = document.getElementById('scene-year');
+const endScreen     = document.getElementById('end-screen');
+const restartBtn    = document.getElementById('restart-btn');
+const sceneTitle    = document.getElementById('scene-title');
+const sceneStory    = document.getElementById('scene-story');
+const ctrlBtns      = Array.from(document.querySelectorAll('.ctrl-btn'));
+const resultText    = document.getElementById('result-text');
+const endMain       = document.getElementById('end-main');
+const sceneProgress = document.getElementById('scene-progress');
+const mainEl        = document.getElementById('main');
+const sceneBgEl     = document.getElementById('scene-bg');
+const choiceHistory = document.getElementById('choice-history');
+
+/* ── 상태 ── */
+let curScene      = 0;
+let choiceDone    = false;
+let sceneAdvTimer = null;
+let myChoices     = [];
+const memory      = { family: 0, help: 0, observe: 0 };
+
+/* ── FOUC 방지 ── */
+document.body.classList.add('loaded');
+
+/* ── 유틸 ── */
+function vib(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch(e) {} }
+
+/* ── 필름 그레인 ── */
+function initGrain() {
+  const canvas = document.getElementById('grain');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  let tick = 0;
+  (function loop() {
+    tick++;
+    if (tick % 3 === 0) {
+      const img = ctx.createImageData(canvas.width, canvas.height);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const v = (Math.random() * 255) | 0;
+        d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* ── 배경 이미지 ── */
+function loadSceneBg(idx) {
+  if (!sceneBgEl) return;
+  sceneBgEl.style.opacity = '0';
+  const img = new Image();
+  img.onload = () => {
+    sceneBgEl.style.backgroundImage = `url('assets/images/scene${idx + 1}.png')`;
+    sceneBgEl.style.opacity = '1';
+  };
+  img.src = `assets/images/scene${idx + 1}.png`;
+}
+
+/* ── 진행 바 + 도트 ── */
+function updateProgress(idx) {
+  progressFill.style.width = ((idx + 1) / SCENES.length * 100) + '%';
+  sceneDots.forEach((dot, i) => {
+    dot.classList.remove('active', 'done');
+    if (i === idx)    dot.classList.add('active');
+    else if (i < idx) dot.classList.add('done');
+  });
+  const s = SCENES[idx];
+  sceneNum.textContent  = `SCENE ${s.num}`;
+  sceneYear.textContent = s.year;
+  sceneProgress.textContent = `${idx + 1} / ${SCENES.length}`;
+}
+
+/* ── 씬 콘텐츠 적용 ── */
+function _applyScene(idx) {
+  curScene   = idx;
+  choiceDone = false;
+  clearTimeout(sceneAdvTimer); sceneAdvTimer = null;
+  const s = SCENES[idx];
+  sceneTitle.textContent = s.title;
+  sceneStory.textContent = s.story;
+  s.choices.forEach((c, i) => { document.getElementById(`c${i}`).textContent = c.text; });
+  ctrlBtns.forEach(b => b.classList.remove('selected', 'disabled'));
+  resultText.textContent = '';
+  resultText.classList.remove('show');
+  document.getElementById('result-area').classList.remove('show');
+  loadSceneBg(idx);
+  updateProgress(idx);
+  endScreen.classList.remove('active');
+  sceneProgress.classList.remove('hidden');
+}
+
+/* ── 씬 전환 (페이드) ── */
+function setScene(idx) {
+  clearTimeout(sceneAdvTimer); sceneAdvTimer = null;
+  vib(22);
+  mainEl.classList.add('fading');
+  setTimeout(() => { _applyScene(idx); mainEl.classList.remove('fading'); }, 240);
+}
+
+/* ── 다음 씬 ── */
+function advanceScene() {
+  clearTimeout(sceneAdvTimer); sceneAdvTimer = null;
+  if (!choiceDone) return;
+  const next = curScene + 1;
+  if (next >= SCENES.length) showEndScreen();
+  else setScene(next);
+}
+
+/* ── 선택 처리 ── */
+function onChoice(idx) {
+  if (choiceDone) return;
+  vib(15);
+  choiceDone = true;
+  const c = SCENES[curScene].choices[idx];
+  memory[c.mem]++;
+  myChoices[curScene] = c.text;
+
+  ctrlBtns.forEach((b, i) => {
+    b.classList.remove('selected', 'disabled');
+    if (i === idx) b.classList.add('selected');
+    else           b.classList.add('disabled');
+  });
+  resultText.textContent = c.result;
+  resultText.classList.add('show');
+  document.getElementById('result-area').classList.add('show');
+
+  clearTimeout(sceneAdvTimer);
+  sceneAdvTimer = setTimeout(advanceScene, 2000);
+}
+
+/* ── 엔딩 화면 (스태거 애니메이션) ── */
+function showEndScreen() {
+  clearTimeout(sceneAdvTimer); sceneAdvTimer = null;
+  updateProgress(SCENES.length - 1);
+  endMain.textContent = getEndingText(memory);
+
+  const items = myChoices.map((c, i) =>
+    `<div class="hi-item"><span class="hi-num">0${i + 1}</span><span class="hi-text">${c}</span></div>`
+  ).join('');
+  choiceHistory.innerHTML = `<div id="choice-history-label">나의 선택 기록</div>` + items;
+
+  restartBtn.disabled = true;
+  sceneProgress.classList.add('hidden');
+  endScreen.classList.add('active');
+
+  /* 순차 등장 */
+  const tag     = endScreen.querySelector('.end-tag');
+  const lines   = Array.from(endScreen.querySelectorAll('.end-line'));
+  const divider = endScreen.querySelector('.end-divider');
+  const sub     = endScreen.querySelector('.end-sub');
+  const hiItems = Array.from(endScreen.querySelectorAll('.hi-item'));
+
+  let t = 180;
+  if (tag)  setTimeout(() => tag.classList.add('reveal'), t);
+  t += 320;
+  lines.forEach(el => { setTimeout(() => el.classList.add('reveal'), t); t += 290; });
+  setTimeout(() => { if (divider) divider.classList.add('reveal'); }, t); t += 520;
+  setTimeout(() => endMain.classList.add('reveal'), t); t += 680;
+  setTimeout(() => { if (sub) sub.classList.add('reveal'); }, t); t += 320;
+  setTimeout(() => choiceHistory.classList.add('reveal'), t); t += 220;
+  hiItems.forEach(el => { setTimeout(() => el.classList.add('reveal'), t); t += 110; });
+  t += 200;
+  setTimeout(() => { restartBtn.classList.add('reveal'); restartBtn.disabled = false; }, t);
+}
+
+/* ── 이벤트 ── */
+ctrlBtns.forEach(btn => {
+  btn.addEventListener('click', () => onChoice(parseInt(btn.dataset.idx, 10)));
+});
+
+restartBtn.addEventListener('click', () => {
+  vib(20);
+  endScreen.querySelectorAll('.reveal').forEach(el => el.classList.remove('reveal'));
+  myChoices = [];
+  memory.family = memory.help = memory.observe = 0;
+  setScene(0);
+});
+
+/* ── 눈 내리기 ── */
+function initSnow() {
+  const cvs = document.createElement('canvas');
+  cvs.style.cssText = 'position:fixed;inset:0;z-index:3;pointer-events:none;';
+  document.body.appendChild(cvs);
+  const ctx = cvs.getContext('2d');
+  function resize() { cvs.width = innerWidth; cvs.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const flakes = Array.from({length: 38}, () => ({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight,
+    r: Math.random() * 1.1 + 0.3,
+    speed: Math.random() * 0.38 + 0.12,
+    drift: (Math.random() - 0.5) * 0.16,
+    op: Math.random() * 0.22 + 0.06
+  }));
+  (function draw() {
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    flakes.forEach(f => {
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,212,230,${f.op})`;
+      ctx.fill();
+      f.y += f.speed; f.x += f.drift;
+      if (f.y > cvs.height) { f.y = -2; f.x = Math.random() * cvs.width; }
+      if (f.x > cvs.width) f.x = 0;
+      if (f.x < 0) f.x = cvs.width;
+    });
+    requestAnimationFrame(draw);
+  })();
+}
+
+/* ── 시작 ── */
+initGrain();
+initSnow();
+_applyScene(0);
+</script>
+</body>
+</html>
