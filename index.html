@@ -1707,8 +1707,9 @@ function init() {
   const _inputHintImm = $('input-hint');
   if (_inputHintImm) _inputHintImm.style.display = 'none';
 
-  // 모바일 URL (서버·룸코드 불필요 — controller.html은 독립 실행)
-  const controllerUrl = location.protocol + '//' + location.host + '/controller.html';
+  // 모바일 URL — 현재 페이지 기준 상대 경로 (GitHub Pages, 로컬 서버 모두 동작)
+  const base = location.href.split('?')[0].replace(/[^/]*$/, '');
+  const controllerUrl = base + 'controller.html';
 
   // 시작화면 QR
   const wrap = $('ss-qr-wrap');
