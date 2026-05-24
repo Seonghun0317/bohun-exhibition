@@ -264,7 +264,7 @@ body.loaded { opacity: 1; transition: opacity 0.5s ease; }
   right: 14px;
   font-family: 'Share Tech Mono', monospace;
   font-size: 7.5px; letter-spacing: 2.5px;
-  color: rgba(130,125,115,0.15);
+  color: rgba(130,125,115,0.32);
   pointer-events: none; z-index: 15;
   transition: opacity 0.4s;
 }
@@ -399,9 +399,66 @@ body.loaded { opacity: 1; transition: opacity 0.5s ease; }
 #restart-btn.reveal { opacity: 1; transform: translateY(0); }
 #restart-btn:active { background: rgba(180,144,72,0.09); border-color: rgba(180,144,72,0.42); color: var(--gold); }
 #restart-btn:disabled { opacity: 0.25 !important; pointer-events: none; }
+
+/* ── 인트로 스플래시 ── */
+#intro-screen {
+  position: fixed; inset: 0; z-index: 90;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 22px;
+  opacity: 1; transition: opacity 0.7s ease;
+  cursor: pointer; touch-action: manipulation;
+  padding: 0 36px;
+}
+#intro-screen.done { opacity: 0; pointer-events: none; }
+.intro-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8.5px; letter-spacing: 7px;
+  color: rgba(180,144,72,0.5); text-align: center;
+}
+.intro-msg {
+  font-size: clamp(22px, 6.2vw, 27px);
+  font-weight: 700; line-height: 1.5; text-align: center;
+  color: var(--text); letter-spacing: 0.3px;
+  text-shadow: 0 0 60px rgba(0,0,0,1);
+  word-break: keep-all;
+}
+.intro-tap {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; letter-spacing: 5px;
+  color: rgba(180,144,72,0.4);
+  animation: introPulse 2.2s ease infinite;
+}
+@keyframes introPulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1;   }
+}
+
+/* ── 다음 장면 버튼 ── */
+#next-scene-btn {
+  display: block; margin: 6px 0 0 auto;
+  padding: 7px 15px;
+  background: transparent;
+  border: 1px solid rgba(180,144,72,0.22); border-radius: 2px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8.5px; letter-spacing: 3px; color: rgba(180,144,72,0.5);
+  cursor: pointer; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+#next-scene-btn.show { opacity: 1; pointer-events: auto; }
+#next-scene-btn:active { color: var(--gold); border-color: rgba(180,144,72,0.5); }
 </style>
 </head>
 <body>
+
+<!-- ── 인트로 스플래시 ── -->
+<div id="intro-screen">
+  <div class="intro-label">1950 · 12 · 흥남</div>
+  <div class="intro-msg">당신이라면<br>어떤 선택을<br>했겠습니까</div>
+  <div class="intro-tap">화면을 터치하여 시작</div>
+</div>
 
 <!-- ── 전역 오버레이 ── -->
 <div id="top-rule"></div>
@@ -461,6 +518,7 @@ body.loaded { opacity: 1; transition: opacity 0.5s ease; }
       <div id="result-dash">—</div>
       <div id="result-text"></div>
     </div>
+    <button id="next-scene-btn">다음 장면 →</button>
   </div>
 </div>
 
@@ -572,6 +630,8 @@ const sceneProgress = document.getElementById('scene-progress');
 const mainEl        = document.getElementById('main');
 const sceneBgEl     = document.getElementById('scene-bg');
 const choiceHistory = document.getElementById('choice-history');
+const nextSceneBtn  = document.getElementById('next-scene-btn');
+const introScreen   = document.getElementById('intro-screen');
 
 /* ── 상태 ── */
 let curScene      = 0;
@@ -647,6 +707,7 @@ function _applyScene(idx) {
   resultText.textContent = '';
   resultText.classList.remove('show');
   document.getElementById('result-area').classList.remove('show');
+  nextSceneBtn.classList.remove('show');
   loadSceneBg(idx);
   updateProgress(idx);
   endScreen.classList.remove('active');
@@ -689,7 +750,8 @@ function onChoice(idx) {
   document.getElementById('result-area').classList.add('show');
 
   clearTimeout(sceneAdvTimer);
-  sceneAdvTimer = setTimeout(advanceScene, 2000);
+  sceneAdvTimer = setTimeout(advanceScene, 3000);
+  setTimeout(() => nextSceneBtn.classList.add('show'), 600);
 }
 
 /* ── 엔딩 화면 (스태거 애니메이션) ── */
@@ -732,6 +794,11 @@ ctrlBtns.forEach(btn => {
   btn.addEventListener('click', () => onChoice(parseInt(btn.dataset.idx, 10)));
 });
 
+nextSceneBtn.addEventListener('click', () => {
+  clearTimeout(sceneAdvTimer);
+  advanceScene();
+});
+
 restartBtn.addEventListener('click', () => {
   vib(20);
   endScreen.querySelectorAll('.reveal').forEach(el => el.classList.remove('reveal'));
@@ -771,6 +838,13 @@ function initSnow() {
     requestAnimationFrame(draw);
   })();
 }
+
+/* ── 인트로 스플래시 해제 ── */
+function dismissIntro() {
+  introScreen.classList.add('done');
+}
+introScreen.addEventListener('click', dismissIntro);
+setTimeout(dismissIntro, 2800);
 
 /* ── 시작 ── */
 initGrain();
