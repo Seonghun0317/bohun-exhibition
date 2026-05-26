@@ -841,10 +841,10 @@ function showScene(idx) {
     elProg.style.transform  = 'scaleX(1)';
   }));
 
-  /* 캔버스 + 배경 이미지 */
+  /* 캔버스 */
   resize();
   painters[idx](ctx, elCvs.width, elCvs.height);
-  loadBg(idx);
+  // loadBg(idx);  ← 사진 준비되면 이 줄 주석 해제
 }
 
 /* ═══════════════════════════════════════════
@@ -935,10 +935,10 @@ window.addEventListener('resize', () => {
 
 function init() {
   initGrain();
-  // 캔버스만 미리 렌더 (오프닝 뒤에서 대기, 진행 바는 오프닝 후에 시작)
+  // 캔버스 미리 렌더 (오프닝 뒤에서 대기)
   resize();
   painters[0](ctx, elCvs.width, elCvs.height);
-  loadBg(0);
+  // loadBg(0);  ← 사진 준비되면 이 줄 주석 해제
   elApp.classList.add('ready');
   startOpening();        // 오프닝 오버레이 시작
 }
