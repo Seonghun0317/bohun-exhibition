@@ -844,10 +844,6 @@ html, body {
     <div class="ss-sub">전쟁이 닥쳐왔습니다 — 당신은 지금 그 10만 명 중 한 명입니다</div>
   </div>
   <div id="ss-right">
-    <div id="ss-prompt">
-      <div class="ssp-icon">▶</div>
-      <div class="ssp-main">체험 시작</div>
-    </div>
     <!-- display 모드: QR + 룸코드 -->
     <div id="ss-qr-wrap" style="display:none;flex-direction:column;align-items:center;gap:6px;">
       <div id="ss-qr-code"></div>
@@ -964,9 +960,9 @@ const SCENES = [
     background: '함경남도 흥남항. 중공군의 남하로 피난민 수만 명이 남쪽으로 향할 배를 기다렸다.',
     story: '전쟁이 밀려왔다. 당신은 가족을 데리고 흥남항까지 걸어왔다. 배를 타지 못하면 이 자리에 남겨진다.',
     choices: [
-      { text: '가족을 찾는다',           result: '서로의 얼굴을 확인했다. 모두 살아있었다.',    mem: 'family'  },
-      { text: '옆에 선 사람에게 말을 건다', result: '낯선 이들과 눈빛이 마주쳤다.',            mem: 'observe' },
-      { text: '들고 온 짐을 내려놓는다', result: '이것이 우리가 가진 전부였다.',               mem: 'observe' }
+      { text: '가족을 찾는다',            results: ['서로의 얼굴을 확인했다. 모두 살아있었다.', '차가운 손이 손을 찾아왔다. 가족이었다.', '이름을 불렀다. 이름이 돌아왔다.'],           mem: 'family'  },
+      { text: '옆에 선 사람에게 말을 건다', results: ['낯선 이들과 눈빛이 마주쳤다.', '처음 본 사람이 고개를 끄덕였다.', '말은 짧았지만, 그것으로 충분했다.'],                       mem: 'observe' },
+      { text: '들고 온 짐을 내려놓는다',  results: ['이것이 우리가 가진 전부였다.', '짐보다 무거운 것이 가슴에 있었다.', '땅에 내려놓는 순간, 숨이 조금 돌아왔다.'],                mem: 'observe' }
     ]
   },
   {
@@ -977,9 +973,9 @@ const SCENES = [
     background: '영하의 추위 속에 피난민들이 흥남 부두를 향해 걸었다. 길 위의 눈이 단단하게 굳어 있었다.',
     story: '발이 감각을 잃어가고 있었다. 행렬은 끝이 보이지 않았다. 배에 탈 수 있을지, 아무도 알려주지 않았다.',
     choices: [
-      { text: '가족 손을 꼭 잡는다', result: '차가운 손이었지만 꼭 잡았다.',         mem: 'family'  },
-      { text: '주변을 살핀다',       result: '쓰러진 사람들과 버려진 짐들이 보였다.', mem: 'observe' },
-      { text: '짐을 다시 챙긴다',    result: '그것이 우리 삶의 전부였다.',            mem: 'family'  }
+      { text: '가족 손을 꼭 잡는다', results: ['차가운 손이었지만 꼭 잡았다.', '놓지 않았다. 그것이 전부였다.', '손끝의 온기가 전부인 밤이었다.'],                       mem: 'family'  },
+      { text: '주변을 살핀다',       results: ['쓰러진 사람들과 버려진 짐들이 보였다.', '버려진 솜이불 위에 눈이 쌓이고 있었다.', '아무도 멈추지 않았다. 멈출 수 없었다.'], mem: 'observe' },
+      { text: '짐을 다시 챙긴다',    results: ['그것이 우리 삶의 전부였다.', '어머니 사진 한 장이 제일 먼저였다.', '남겨두면 영영 잃는다는 것을 알았다.'],              mem: 'family'  }
     ]
   },
   {
@@ -990,9 +986,9 @@ const SCENES = [
     background: '부두 앞에 수만 명의 피난민이 뒤엉켜 있었다. 미군과 UN군이 선박 확보를 위해 분주했다.',
     story: '부두를 가득 메운 사람들 사이로 미군이 분주히 움직였다. 저 불빛이 배라면 — 과연 얼마나 탈 수 있을까.',
     choices: [
-      { text: '그 자리에서 기다린다',      result: '자리를 지키는 것만으로도 힘이 들었다.',                    mem: 'observe' },
-      { text: '아이를 도와준다',           result: '그 아이의 눈이 조용히 당신을 바라봤다.',                   mem: 'help'    },
-      { text: '군인들의 말을 들으려 한다', result: '그들의 말은 알아들을 수 없었다. 배는 그 자리에 있었다.',   mem: 'observe' }
+      { text: '그 자리에서 기다린다',      results: ['자리를 지키는 것만으로도 힘이 들었다.', '기다림이 곧 의지였다.', '발이 굳어도 자리를 떠나지 않았다.'],                              mem: 'observe' },
+      { text: '아이를 도와준다',           results: ['그 아이의 눈이 조용히 당신을 바라봤다.', '작은 손이 당신 손을 붙잡았다.', '아이는 아무 말도 하지 않았다. 필요 없었다.'],             mem: 'help'    },
+      { text: '군인들의 말을 들으려 한다', results: ['그들의 말은 알아들을 수 없었다. 배는 그 자리에 있었다.', '언어는 달랐지만 손짓은 같은 방향이었다.', '알아들을 수 없어도 배가 온다는 건 알았다.'], mem: 'observe' }
     ]
   },
   {
@@ -1003,9 +999,9 @@ const SCENES = [
     background: '메러디스 빅토리호는 정원을 훨씬 넘긴 14,000명의 피난민을 태웠다. 기적 같은 일이었다.',
     story: '드디어 당신 차례가 왔다. 갑판에 올라서자 발 디딜 틈이 없었다. 뒤를 돌아보니 부두는 아직 사람들로 가득했다.',
     choices: [
-      { text: '가족과 함께 이동한다', result: '배 위에 섰다는 것이 실감나지 않았다.',        mem: 'family'  },
-      { text: '주변 사람을 돕는다',   result: '손을 내밀었다. 그것이 사람이 할 수 있는 일이었다.', mem: 'help'    },
-      { text: '뒤를 돌아본다',        result: '아직 남은 사람들이 눈에 밟혔다.',             mem: 'observe' }
+      { text: '가족과 함께 이동한다', results: ['배 위에 섰다는 것이 실감나지 않았다.', '가족이 모두 갑판 위에 있었다.', '첫 발을 내딛는 순간, 눈물이 났다.'],                              mem: 'family'  },
+      { text: '주변 사람을 돕는다',   results: ['손을 내밀었다. 그것이 사람이 할 수 있는 일이었다.', '노인의 손을 잡고 함께 갑판에 올랐다.', '그 손이 당신 손을 더 세게 쥐었다.'],         mem: 'help'    },
+      { text: '뒤를 돌아본다',        results: ['아직 남은 사람들이 눈에 밟혔다.', '부두에는 아직 수천 명이 서 있었다.', '떠나는 자의 눈과 남겨진 자의 눈이 마주쳤다.'],                   mem: 'observe' }
     ]
   },
   {
@@ -1016,9 +1012,9 @@ const SCENES = [
     background: '흥남철수 작전 최종일. 약 105,000명의 피난민이 이 작전으로 남쪽 땅을 밟았다.',
     story: '배가 천천히 흥남항을 떠난다. 차가운 바닷바람이 불어온다. 고향이 점점 멀어지고 있다.',
     choices: [
-      { text: '멀어지는 고향을 바라본다', result: '흥남의 불빛이 점점 작아졌다.',          mem: 'observe' },
-      { text: '가족을 확인한다',          result: '모두 함께 있었다. 그것으로 충분했다.', mem: 'family'  },
-      { text: '조용히 주변을 바라본다',   result: '파도 소리만이 울었다.',                mem: 'observe' }
+      { text: '멀어지는 고향을 바라본다', results: ['흥남의 불빛이 점점 작아졌다.', '더 이상 보이지 않을 때까지 바라봤다.', '고향이 수평선 너머로 사라졌다.'],       mem: 'observe' },
+      { text: '가족을 확인한다',          results: ['모두 함께 있었다. 그것으로 충분했다.', '차가운 갑판 위, 모두 살아있었다.', '이름을 하나씩 불렀다. 모두 대답했다.'], mem: 'family'  },
+      { text: '조용히 주변을 바라본다',   results: ['파도 소리만이 울었다.', '사람들은 아무 말도 하지 않았다.', '바람이 불었다. 누군가가 울고 있었다.'],             mem: 'observe' }
     ]
   }
 ];
@@ -1159,7 +1155,7 @@ function makeChoice(idx) {
     else           { el.classList.remove('selected'); el.classList.add('disabled'); }
   });
 
-  elResultLine.textContent = choice.result;
+  elResultLine.textContent = choice.results[Math.floor(Math.random() * choice.results.length)];
   elResultLine.classList.add('visible');
 
   autoAdvanceTimer = setTimeout(nextScene, 800);
@@ -1727,6 +1723,24 @@ function init() {
     new QRCode(qrEl, { text: controllerUrl, width: 110, height: 110, colorDark: '#07080E', colorLight: '#E8E2D4', correctLevel: QRCode.CorrectLevel.H });
   }
   // LED 데모는 완전히 독립적으로 무한 루프 실행 — 서버 연결 불필요
+})();
+
+/* ═══════════════════════════════════════════
+   일반 모드: 엔딩 화면 QR — 현재 페이지 URL
+═══════════════════════════════════════════ */
+(function initEndingQr() {
+  if (displayMode) return; // display 모드는 initDisplayMode 에서 처리
+  const qrEl = $('qr-code');
+  if (qrEl && !qrEl.hasChildNodes()) {
+    const base = location.href.split('?')[0].replace(/[^/]*$/, '');
+    const controllerUrl = base + 'controller.html';
+    new QRCode(qrEl, {
+      text: controllerUrl,
+      width: 110, height: 110,
+      colorDark: '#07080E', colorLight: '#E8E2D4',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
 })();
 
 init();
