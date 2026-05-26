@@ -86,39 +86,32 @@ html,body {
 }
 .l-sep { width:100%; height:1px; background:var(--border); margin:5px 0 6px; flex-shrink:0; }
 
-#tl-nums { display:flex; gap:3px; align-items:center; flex-shrink:0; margin-bottom:5px; }
-.tl-num {
-  font-family:'Share Tech Mono',monospace;
-  font-size:9px; letter-spacing:0;
-  width:22px; height:17px;
-  display:flex; align-items:center; justify-content:center;
-  color:rgba(180,144,72,.22);
-  border:1px solid rgba(180,144,72,.1);
-  transition:all .5s ease; flex-shrink:0; position:relative;
+/* ══ 타임라인 세그먼트 바 ══ */
+#tl-bars {
+  display:flex; gap:4px; align-items:flex-end;
+  flex-shrink:0; margin-bottom:6px; width:100%; height:18px;
 }
-.tl-num.done {
-  color:rgba(180,144,72,.6);
-  border-color:rgba(180,144,72,.3);
-  background:rgba(180,144,72,.07);
+.tl-bar {
+  flex:1; height:4px;
+  background:rgba(180,144,72,.12);
+  border-top:1px solid rgba(180,144,72,.18);
+  transition:height .4s ease, background .4s ease, box-shadow .4s ease;
 }
-.tl-num.done::after {
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(
-    135deg,
-    transparent 40%, rgba(180,144,72,.28) 40%,
-    rgba(180,144,72,.28) 60%, transparent 60%
-  );
+.tl-bar.done {
+  height:4px;
+  background:rgba(180,144,72,.45);
+  border-top-color:rgba(180,144,72,.6);
 }
-.tl-num.current {
-  color:var(--gold);
-  border-color:rgba(180,144,72,.9);
-  background:rgba(180,144,72,.13);
-  animation:num-glow 2.2s ease-in-out infinite;
+.tl-bar.current {
+  height:14px;
+  background:var(--gold);
+  border-top-color:var(--gold);
+  animation:bar-pulse 2.2s ease-in-out infinite;
 }
 
-@keyframes num-glow {
-  0%,100% { box-shadow:0 0 4px rgba(180,144,72,.3); }
-  50%     { box-shadow:0 0 10px rgba(180,144,72,.75); }
+@keyframes bar-pulse {
+  0%,100% { box-shadow:0 0 6px rgba(180,144,72,.5); }
+  50%     { box-shadow:0 0 14px rgba(180,144,72,.95), 0 -4px 8px rgba(180,144,72,.4); }
 }
 
 .l-counter {
@@ -325,8 +318,8 @@ html,body {
   #panel-left::before { width:100%; height:2px; top:0; left:0; right:auto; background:linear-gradient(90deg, var(--gold), rgba(180,144,72,.15)); }
   .l-label,.l-sep,.l-year { display:none; }
   .l-title  { font-size:13px; letter-spacing:.3px; }
-  #tl-nums  { margin-bottom:0; gap:2px; }
-  .tl-num   { width:18px; height:14px; font-size:7.5px; }
+  #tl-bars  { margin-bottom:0; gap:3px; height:14px; }
+  .tl-bar.current { height:10px; }
   .l-counter { margin-top:0; }
 
   #panel-center { width:100%; height:auto; flex:1 1 0; min-height:0; }
@@ -381,7 +374,7 @@ html,body {
     <div class="l-label">6.25 전쟁 타임라인</div>
     <div class="l-title">1950–1953</div>
     <div class="l-sep"></div>
-    <div id="tl-nums"></div>
+    <div id="tl-bars"></div>
     <div class="l-counter" id="l-counter">SCENE 01 / 09</div>
     <div class="l-year">1129 DAYS</div>
   </div>
@@ -508,7 +501,7 @@ const elApp   = $('app');
 const elFade  = $('fade-overlay');
 const elOpn   = $('opening-overlay');
 const elEnd   = $('ending-overlay');
-const elNums  = $('tl-nums');
+const elBars  = $('tl-bars');
 const elLCntr = $('l-counter');
 const elCCntr = $('c-counter');
 const elDate  = $('r-date');
@@ -521,12 +514,11 @@ const elProg  = $('scene-progress');
 const elCvs   = $('scene-canvas');
 const ctx     = elCvs.getContext('2d');
 
-/* 타임라인 번호 셀 생성 */
+/* 타임라인 세그먼트 바 생성 */
 SCENES.forEach((_,i) => {
-  const n = document.createElement('div');
-  n.className = 'tl-num'; n.id = `num-${i}`;
-  n.textContent = String(i+1).padStart(2,'0');
-  elNums.appendChild(n);
+  const b = document.createElement('div');
+  b.className = 'tl-bar'; b.id = `bar-${i}`;
+  elBars.appendChild(b);
 });
 
 /* ═══════════════════════════════════════════
@@ -862,11 +854,11 @@ function loadBg(idx) {
 function showScene(idx) {
   const s = SCENES[idx];
 
-  /* 타임라인 번호 셀 */
+  /* 타임라인 세그먼트 바 */
   SCENES.forEach((_,i) => {
-    const n = $(`num-${i}`);
-    if (!n) return;
-    n.className = 'tl-num' + (i < idx ? ' done' : i === idx ? ' current' : '');
+    const b = $(`bar-${i}`);
+    if (!b) return;
+    b.className = 'tl-bar' + (i < idx ? ' done' : i === idx ? ' current' : '');
   });
   const label = `SCENE ${String(idx+1).padStart(2,'0')} / 09`;
   elLCntr.textContent = label;
