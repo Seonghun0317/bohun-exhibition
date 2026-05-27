@@ -138,14 +138,14 @@ html,body {
   background-color:transparent;
   z-index:1; opacity:0;
   transition:opacity 0.8s ease;
-  filter:brightness(1.15) contrast(1.12) saturate(.60);
+  filter:brightness(1.30) contrast(1.08) saturate(.65);
 }
 #scene-bg::after {
   content:''; position:absolute; inset:0;
   background:
     radial-gradient(ellipse at 28% 40%, rgba(180,144,72,.06) 0%, transparent 48%),
-    linear-gradient(90deg, rgba(6,9,15,.42) 0%, transparent 30%),
-    rgba(5,8,13,.52);
+    linear-gradient(90deg, rgba(6,9,15,.38) 0%, transparent 30%),
+    rgba(5,8,13,.35);
   pointer-events:none;
 }
 
@@ -820,10 +820,19 @@ const painters = [
 ];
 
 /* ═══════════════════════════════════════════
-   사진 로드 — PNG → JPG → JPEG → WebP 순서로 시도
-   보훈 사이트와 동일한 방식 + 다중 포맷 지원
+   사진 로드 — 사전 로드 + 씬별 밝기 조정
+   깜빡임 방지: 이미지를 미리 캐싱해 전환 시 즉시 표시
 ═══════════════════════════════════════════ */
 const IMG_FORMATS = ['png', 'jpg', 'jpeg', 'webp'];
+
+// 씬별 밝기 — scene1(흑백, 어두움)은 크게, 나머지는 소폭 증가
+const SCENE_BRIGHTNESS = [1.60, 1.30, 1.28, 1.28, 1.28, 1.28, 1.30, 1.40, 1.28];
+
+// 사전 로드된 이미지 URL 캐시
+const preloadedSrc = new Array(SCENES.length).fill(null);
+
+// 페이드 전환 중 플래그 — 전환 중엔 bg 즉시 표시
+let isFading = false;
 
 function tryLoad(idx, formats, done) {
   if (!formats.length) { done(null); return; }
@@ -834,18 +843,56 @@ function tryLoad(idx, formats, done) {
   img.src = `assets/images/625/scene${idx+1}.${fmt}`;
 }
 
-function loadBg(idx) {
-  elBg.style.transition  = 'none';
-  elBg.style.opacity     = '0';
-  elBg.style.backgroundImage = 'none';
+function preloadScene(idx) {
+  if (preloadedSrc[idx] !== null) return; // 이미 로드됨
+  preloadedSrc[idx] = '';                 // 로드 중 표시 (중복 방지)
   tryLoad(idx, IMG_FORMATS, src => {
-    if (!src) return;
-    elBg.style.backgroundImage = `url('${src}')`;
-    requestAnimationFrame(() => {
-      elBg.style.transition = 'opacity 0.8s ease';
-      elBg.style.opacity    = '1';
-    });
+    preloadedSrc[idx] = src || '';
   });
+}
+
+function loadBg(idx) {
+  const bright = SCENE_BRIGHTNESS[idx] ?? 1.30;
+  elBg.style.filter = `brightness(${bright}) contrast(1.08) saturate(.65)`;
+
+  const src = preloadedSrc[idx];
+
+  // 아직 로드 안 됐으면 로드 후 처리
+  if (!src) {
+    elBg.style.transition = 'none';
+    elBg.style.opacity    = '0';
+    elBg.style.backgroundImage = 'none';
+    tryLoad(idx, IMG_FORMATS, loaded => {
+      if (!loaded) return;
+      preloadedSrc[idx] = loaded;
+      elBg.style.backgroundImage = `url('${loaded}')`;
+      if (isFading) {
+        elBg.style.opacity = '1';
+      } else {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          elBg.style.transition = 'opacity 0.8s ease';
+          elBg.style.opacity    = '1';
+        }));
+      }
+    });
+    return;
+  }
+
+  elBg.style.backgroundImage = src ? `url('${src}')` : 'none';
+
+  if (isFading) {
+    // 페이드 오버레이 뒤에 있으므로 즉시 불투명하게 → 오버레이 걷히면 바로 보임
+    elBg.style.transition = 'none';
+    elBg.style.opacity    = src ? '1' : '0';
+  } else {
+    // 일반 전환 — 부드럽게 페이드인
+    elBg.style.transition = 'none';
+    elBg.style.opacity    = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      elBg.style.transition = 'opacity 0.8s ease';
+      elBg.style.opacity    = src ? '1' : '0';
+    }));
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -900,15 +947,22 @@ let seqTimer   = null;
 const FADE     = 560;  // ms, 페이드 전환 시간
 
 function fadeTo(fn) {
+  isFading = true;
   elFade.classList.add('active');
   setTimeout(() => {
     fn();
-    setTimeout(() => elFade.classList.remove('active'), 60);
+    setTimeout(() => {
+      elFade.classList.remove('active');
+      isFading = false;
+    }, 60);
   }, FADE);
 }
 
 function scheduleNext() {
   clearTimeout(seqTimer);
+  // 다음 장면 이미지 미리 로드 — 타이머 도중 로딩 완료되도록
+  const next = currentIdx + 1;
+  if (next < SCENES.length) preloadScene(next);
   seqTimer = setTimeout(advance, SCENES[currentIdx].duration);
 }
 
@@ -997,7 +1051,9 @@ async function keepScreenAwake() {
 function init() {
   keepScreenAwake();
   initGrain();
-  // 캔버스 미리 렌더 (오프닝 뒤에서 대기)
+  // 오프닝 화면 중 scene1·2 미리 로드 (깜빡임 방지)
+  preloadScene(0);
+  preloadScene(1);
   resize();
   painters[0](ctx, elCvs.width, elCvs.height);
   loadBg(0);
