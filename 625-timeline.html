@@ -978,14 +978,31 @@ window.addEventListener('resize', () => {
   }
 });
 
+/* ═══════════════════════════════════════════
+   화면 켜짐 유지 (Wake Lock)
+   — 전시 중 화면이 자동으로 꺼지지 않도록
+═══════════════════════════════════════════ */
+async function keepScreenAwake() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    let lock = await navigator.wakeLock.request('screen');
+    document.addEventListener('visibilitychange', async () => {
+      if (lock.released && document.visibilityState === 'visible') {
+        lock = await navigator.wakeLock.request('screen');
+      }
+    });
+  } catch(e) {}
+}
+
 function init() {
+  keepScreenAwake();
   initGrain();
   // 캔버스 미리 렌더 (오프닝 뒤에서 대기)
   resize();
   painters[0](ctx, elCvs.width, elCvs.height);
   // loadBg(0);  ← 사진 준비되면 이 줄 주석 해제
   elApp.classList.add('ready');
-  startOpening();        // 오프닝 오버레이 시작
+  startOpening();
 }
 
 init();
