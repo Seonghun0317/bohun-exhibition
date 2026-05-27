@@ -91,14 +91,18 @@ html,body {
   font-size:13px; font-weight:700;
   color:var(--text-1); letter-spacing:.5px; line-height:1.2;
   margin-bottom:1px; flex-shrink:0;
+  opacity:0; transition:opacity .4s ease;
 }
+#l-scene-name.show { opacity:1; }
 #l-scene-desc {
   font-family:'Share Tech Mono',monospace;
   font-size:8px; letter-spacing:1.2px;
   color:rgba(180,144,72,.65); line-height:1.4;
   margin-bottom:5px; flex-shrink:0;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  opacity:0; transition:opacity .4s ease .1s;
 }
+#l-scene-desc.show { opacity:1; }
 
 /* ══ 타임라인 세그먼트 바 ══ */
 #tl-bars {
@@ -436,7 +440,7 @@ const SCENES = [
     title: '전쟁의 시작',
     desc: '북한군의 기습 남침으로 전쟁이 시작되었다',
     // 사실: 1950년 6월 25일 새벽 4시, 38선 전역 동시 기습. 242,000명 병력 남침.
-    histNote: '새벽 4시, 38선 전역에서 북한군 242,000명이 일제히 남침을 개시했다',
+    histNote: '새벽 4시, 38선 전역에서 북한 총병력 242,000명이 남침을 개시했다',
     stamp: '06.25 · 남침 개시', duration: 5800,
   },
   {
@@ -486,7 +490,7 @@ const SCENES = [
     desc: '수많은 생명을 실어 나른 철수 작전',
     // 사실: 12월 15~24일 흥남 철수 작전. 피난민 약 98,100명(공식 집계).
     // "10만 명"은 일반적 통칭, 정확한 수치는 98,100명.
-    histNote: '10일간의 철수 — 피난민 98,100명이 14,000명을 태운 배에 함께 올랐다',
+    histNote: '10일간의 철수 — 98,100명을 배로 구출했다. 화물선 한 척이 14,000명을 실어냈다',
     stamp: '12 · 흥남 철수', duration: 5500,
   },
   {
@@ -937,8 +941,16 @@ function showScene(idx) {
   elLCntr.textContent = label;
   elCCntr.textContent = `SCENE ${String(idx+1).padStart(2,'0')} / 09`;
   if (elStamp) elStamp.innerHTML = `6.25 전쟁<br>${s.stamp}`;
-  if (elLSceneName) elLSceneName.textContent = s.title;
-  if (elLSceneDesc) elLSceneDesc.textContent  = s.stamp;
+  if (elLSceneName) {
+    elLSceneName.classList.remove('show');
+    elLSceneName.textContent = s.title;
+    requestAnimationFrame(() => requestAnimationFrame(() => elLSceneName.classList.add('show')));
+  }
+  if (elLSceneDesc) {
+    elLSceneDesc.classList.remove('show');
+    elLSceneDesc.textContent = s.stamp;
+    requestAnimationFrame(() => requestAnimationFrame(() => elLSceneDesc.classList.add('show')));
+  }
 
   /* 텍스트 fade-in */
   [elDate, elTitle, elDesc, elHist].forEach(el => el.classList.remove('show'));
