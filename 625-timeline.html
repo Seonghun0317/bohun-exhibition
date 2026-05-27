@@ -402,7 +402,7 @@ html,body {
     <div id="scene-progress"></div>
     <div id="doc-stamp"></div>
     <div class="c-content">
-      <div class="c-counter" id="c-counter">SCENE  01 / 09</div>
+      <div class="c-counter" id="c-counter">SCENE 01 / 09</div>
       <div class="c-sep"></div>
       <div id="c-hist"></div>
     </div>
@@ -862,10 +862,10 @@ function tryLoad(idx, formats, done) {
 }
 
 function preloadScene(idx) {
-  if (preloadedSrc[idx] !== null) return; // 이미 로드됨
-  preloadedSrc[idx] = '';                 // 로드 중 표시 (중복 방지)
+  if (preloadedSrc[idx] !== null) return;
+  preloadedSrc[idx] = '';
   tryLoad(idx, IMG_FORMATS, src => {
-    preloadedSrc[idx] = src || '';
+    preloadedSrc[idx] = src || false; // false = 이미지 없음 확정 (재시도 방지)
   });
 }
 
@@ -875,13 +875,21 @@ function loadBg(idx) {
 
   const src = preloadedSrc[idx];
 
-  // 아직 로드 안 됐으면 로드 후 처리
+  // 이미지 없음 확정 — 캔버스만 사용
+  if (src === false) {
+    elBg.style.transition = 'none';
+    elBg.style.opacity    = '0';
+    elBg.style.backgroundImage = 'none';
+    return;
+  }
+
+  // 아직 로드 중 ('' 또는 null) — 직접 로드
   if (!src) {
     elBg.style.transition = 'none';
     elBg.style.opacity    = '0';
     elBg.style.backgroundImage = 'none';
     tryLoad(idx, IMG_FORMATS, loaded => {
-      if (!loaded) return;
+      if (!loaded) { preloadedSrc[idx] = false; return; }
       preloadedSrc[idx] = loaded;
       elBg.style.backgroundImage = `url('${loaded}')`;
       if (isFading) {
@@ -896,7 +904,7 @@ function loadBg(idx) {
     return;
   }
 
-  elBg.style.backgroundImage = src ? `url('${src}')` : 'none';
+  elBg.style.backgroundImage = `url('${src}')`;
 
   if (isFading) {
     // 페이드 오버레이 뒤에 있으므로 즉시 불투명하게 → 오버레이 걷히면 바로 보임
