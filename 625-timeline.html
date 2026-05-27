@@ -1001,26 +1001,25 @@ function endSequence() {
 function startOpening() {
   elOpn.style.display = 'flex';
   if (isFading) {
-    // 루프백(엔딩→처음): 블랙 오버레이 뒤에서 즉시 불투명하게 — Bug3 수정
+    // 루프백(엔딩→처음): 블랙 커튼 뒤에서 즉시 불투명하게 표시
     elOpn.style.transition = 'none';
     elOpn.style.opacity    = '1';
     elOpn.classList.add('show');
   } else {
+    // 최초 로드: CSS 페이드인
     requestAnimationFrame(() => requestAnimationFrame(() => elOpn.classList.add('show')));
   }
   seqTimer = setTimeout(() => {
-    // 오프닝 닫히기 전 사진을 뒤에서 즉시 준비 — Bug1 수정
-    isFading = true;
-    showScene(currentIdx);
-    isFading = false;
-    // 인라인 스타일 초기화 후 CSS 트랜지션으로 페이드아웃
-    elOpn.style.transition = '';
-    elOpn.style.opacity    = '';
-    elOpn.classList.remove('show');
-    setTimeout(() => {
-      elOpn.style.display = 'none';
+    // 오프닝 종료도 fadeTo(블랙 커튼)로 처리
+    // → 커튼 뒤에서 씬 준비 후 한 번에 드러남, 버벅임 없음
+    fadeTo(() => {
+      elOpn.classList.remove('show');
+      elOpn.style.transition = 'none';
+      elOpn.style.opacity    = '';
+      elOpn.style.display    = 'none';
+      showScene(currentIdx);
       scheduleNext();
-    }, 900);
+    });
   }, 4800);
 }
 
@@ -1070,12 +1069,11 @@ async function keepScreenAwake() {
 function init() {
   keepScreenAwake();
   initGrain();
-  // 오프닝 화면 중 scene1·2 미리 로드 (깜빡임 방지)
+  // 오프닝 중 미리 로드 (4.8s 여유)
   preloadScene(0);
   preloadScene(1);
   resize();
   painters[0](ctx, elCvs.width, elCvs.height);
-  loadBg(0);
   elApp.classList.add('ready');
   startOpening();
 }
