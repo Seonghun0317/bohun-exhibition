@@ -831,7 +831,7 @@ function tryLoad(idx, formats, done) {
   const img = new Image();
   img.onload  = () => done(img.src);
   img.onerror = () => tryLoad(idx, rest, done);
-  img.src = `assets/images/scene${idx+1}.${fmt}`;
+  img.src = `assets/images/625/scene${idx+1}.${fmt}`;
 }
 
 function loadBg(idx) {
