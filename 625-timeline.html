@@ -974,14 +974,20 @@ function advance() {
 
 function endSequence() {
   fadeTo(() => {
+    // 블랙 오버레이 뒤에서 즉시 불투명하게 준비 — Bug2 수정
     elEnd.classList.add('visible');
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      elEnd.classList.add('show');
-      setTimeout(() => $('e-year').classList.add('show'), 350);
-      setTimeout(() => $('e-main').classList.add('show'), 900);
-      setTimeout(() => $('e-sub').classList.add('show'),  1700);
-    }));
+    elEnd.style.transition = 'none';
+    elEnd.style.opacity    = '1';
+    elEnd.classList.add('show');
+    // 텍스트는 블랙 오버레이가 걷힌 뒤 시차 등장
+    setTimeout(() => $('e-year').classList.add('show'), 350);
+    setTimeout(() => $('e-main').classList.add('show'), 900);
+    setTimeout(() => $('e-sub').classList.add('show'),  1700);
+
     seqTimer = setTimeout(() => {
+      // 인라인 스타일 초기화 후 CSS 트랜지션으로 페이드아웃
+      elEnd.style.transition = '';
+      elEnd.style.opacity    = '';
       elEnd.classList.remove('show');
       setTimeout(() => {
         elEnd.classList.remove('visible');
@@ -994,12 +1000,25 @@ function endSequence() {
 
 function startOpening() {
   elOpn.style.display = 'flex';
-  requestAnimationFrame(() => requestAnimationFrame(() => elOpn.classList.add('show')));
+  if (isFading) {
+    // 루프백(엔딩→처음): 블랙 오버레이 뒤에서 즉시 불투명하게 — Bug3 수정
+    elOpn.style.transition = 'none';
+    elOpn.style.opacity    = '1';
+    elOpn.classList.add('show');
+  } else {
+    requestAnimationFrame(() => requestAnimationFrame(() => elOpn.classList.add('show')));
+  }
   seqTimer = setTimeout(() => {
+    // 오프닝 닫히기 전 사진을 뒤에서 즉시 준비 — Bug1 수정
+    isFading = true;
+    showScene(currentIdx);
+    isFading = false;
+    // 인라인 스타일 초기화 후 CSS 트랜지션으로 페이드아웃
+    elOpn.style.transition = '';
+    elOpn.style.opacity    = '';
     elOpn.classList.remove('show');
     setTimeout(() => {
       elOpn.style.display = 'none';
-      showScene(currentIdx);  // 오프닝 뒤에 진행 바를 새로 시작
       scheduleNext();
     }, 900);
   }, 4800);
