@@ -889,7 +889,7 @@ function showScene(idx) {
   /* 캔버스 */
   resize();
   painters[idx](ctx, elCvs.width, elCvs.height);
-  // loadBg(idx);  ← 사진 준비되면 이 줄 주석 해제
+  loadBg(idx);
 }
 
 /* ═══════════════════════════════════════════
@@ -1000,7 +1000,7 @@ function init() {
   // 캔버스 미리 렌더 (오프닝 뒤에서 대기)
   resize();
   painters[0](ctx, elCvs.width, elCvs.height);
-  // loadBg(0);  ← 사진 준비되면 이 줄 주석 해제
+  loadBg(0);
   elApp.classList.add('ready');
   startOpening();
 }
